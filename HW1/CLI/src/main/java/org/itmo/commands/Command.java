@@ -5,5 +5,5 @@ public interface Command {
     /**
      * Executes command
      */
-    void execute();
+    void execute() throws Exception;
 }

@@ -1,7 +1,10 @@
 package org.itmo.utils;
 
+import lombok.Getter;
+
 import java.util.List;
 
+@Getter
 public class CommandInfo {
     private final String commandName;
     
@@ -15,18 +18,6 @@ public class CommandInfo {
         this.commandName = commandName;
         this.flags = flags;
         this.params = params;
-    }
-    
-    public String getCommandName() {
-        return commandName;
-    }
-    
-    public List<String> getFlags() {
-        return flags;
-    }
-    
-    public List<String> getParams() {
-        return params;
     }
     
     public void addFlag(String flag) {

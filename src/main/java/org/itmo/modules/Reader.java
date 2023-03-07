@@ -17,8 +17,6 @@ public class Reader {
     
     /**
      * Reads symbols from the input stream until meets END_SYMBOL
-     *
-     * @return String from input stream
      */
     public String readInput() {
         StringBuilder line = new StringBuilder(100);

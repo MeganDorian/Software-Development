@@ -1,3 +1,5 @@
+package modules;
+
 import org.itmo.modules.LocalStorage;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;

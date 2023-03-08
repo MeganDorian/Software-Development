@@ -21,10 +21,10 @@ public class Reader {
     public String readInput() {
         StringBuilder line = new StringBuilder(100);
         try {
-            String c = Character.toString(inputStream.read());
+            String c = Character.toString((char)inputStream.read());
             while (!c.equals(END_SYMBOL)) {
                 line.append(c);
-                c = Character.toString(inputStream.read());
+                c = Character.toString((char)inputStream.read());
             }
         } catch (IOException e) {
             throw new RuntimeException(e);

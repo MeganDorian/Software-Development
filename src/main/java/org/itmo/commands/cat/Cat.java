@@ -4,16 +4,15 @@ import org.itmo.commands.Command;
 import org.itmo.commands.Commands;
 import org.itmo.exceptions.CatFileNotFoundException;
 import org.itmo.modules.Reader;
-import org.itmo.utils.CommandInfo;
-import org.itmo.utils.CommandResultSaver;
-import org.itmo.utils.LoadHelp;
+import org.itmo.utils.*;
 
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
-import java.util.Collections;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * CAT command to work with file contents
@@ -23,7 +22,7 @@ public class Cat implements Command {
     private final List<String> params;
     
     public Cat(CommandInfo commandInfo) {
-        flags = Collections.emptyList();
+        flags = new ArrayList<>();
         commandInfo.getFlags().forEach(flag -> {
             flags.add(CatFlags.valueOf(flag.replaceAll("-", "").toUpperCase()));
         });
@@ -39,46 +38,50 @@ public class Cat implements Command {
     @Override
     public void execute() throws CatFileNotFoundException {
         if (!flags.isEmpty() && flags.contains(CatFlags.HELP) || flags.contains(CatFlags.H)) {
-            LoadHelp.printHelp(String.valueOf(Commands.cat));
+            FileInfo helpInfo = FileUtils.getFileInfo(ResourcesLoader.getProperty(Commands.cat + ".help"));
+            while (helpInfo.getPosition() < helpInfo.getFileSize()) {
+                Optional<String> line = FileUtils.loadLineFromFile(helpInfo);
+                line.ifPresent( l -> CommandResultSaver.saveCommandResult(l, true));
+            }
             return;
         }
         
-        StringBuilder line = new StringBuilder(100);
+        StringBuilder line = new StringBuilder();
         boolean addNumber = flags.contains(CatFlags.E);
         boolean addDollarSymbol = flags.contains(CatFlags.E);
         int lineNumber = 1;
         
-        if (addNumber) {
-            line.append("\t").append(lineNumber).append("\t\t");
-            lineNumber++;
-        }
-        if (addDollarSymbol) {
-            line.append("$");
-        }
-        
         if (params.isEmpty()) {
+            if (addNumber) {
+                line.append("\t").append(lineNumber).append("\t\t");
+            }
             line.append(new Reader().readInput());
-            CommandResultSaver.saveCommandResult(line.toString());
+            
+            if (addDollarSymbol) {
+                line.append("$");
+            }
+            CommandResultSaver.saveCommandResult(line.toString(), false);
         } else {
             
             for (String fileName : params) {
                 File file = new File(fileName);
-                if (file.exists() && file.isFile()) {
+                if (!file.exists() || !file.isFile()) {
                     throw new CatFileNotFoundException("File not found with name " + fileName);
                 }
                 try (BufferedReader reader = new BufferedReader(new FileReader(fileName))) {
-                    String read = reader.readLine();
-                    while (read != null) {
+                    String l = reader.readLine();
+                    while (l != null) {
                         if (addNumber) {
                             line.append("\t").append(lineNumber).append("\t\t");
                             lineNumber++;
                         }
+                        line.append(l);
                         if (addDollarSymbol) {
                             line.append("$");
                         }
-                        read = reader.readLine();
-                        CommandResultSaver.saveCommandResult(line.toString());
+                        CommandResultSaver.saveCommandResult(line.toString(), true);
                         line.delete(0, line.length());
+                        l = reader.readLine();
                     }
                 } catch (IOException e) {
                     throw new RuntimeException(e);
@@ -86,4 +89,5 @@ public class Cat implements Command {
             }
         }
     }
+    
 }

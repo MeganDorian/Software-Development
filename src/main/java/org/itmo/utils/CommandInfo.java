@@ -12,9 +12,9 @@ public class CommandInfo {
     
     private final List<String> params;
     
-    public CommandInfo(final String commandName,
-                       final List<String> flags,
-                       final List<String> params) {
+    public CommandInfo(String commandName,
+                       List<String> flags,
+                       List<String> params) {
         this.commandName = commandName;
         this.flags = flags;
         this.params = params;

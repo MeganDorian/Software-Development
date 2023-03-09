@@ -21,17 +21,18 @@ public class CommandResultSaver {
     @Getter
     private Path result;
     
+    public void createCommandResultFile() throws IOException {
+        result = Files.createTempFile(commandResult, ".cli");
+    }
+    
     /**
      * Saves result of command execution to temporary file
      *
      * @param content content to save
      */
     public void saveCommandResult(String content, boolean appendEndOfLine) {
-        try {
-            result = result == null ? Files.createTempFile(commandResult, ".cli") : result;
-            try (FileOutputStream fileOutputStream = new FileOutputStream(result.toFile(), true)) {
-                fileOutputStream.write((content + (appendEndOfLine ? "\n" : "")).getBytes(StandardCharsets.UTF_8));
-            }
+        try (FileOutputStream fileOutputStream = new FileOutputStream(result.toFile(), true)) {
+            fileOutputStream.write((content + (appendEndOfLine ? "\n" : "")).getBytes(StandardCharsets.UTF_8));
         } catch (IOException e) {
             throw new RuntimeException(e);
         }

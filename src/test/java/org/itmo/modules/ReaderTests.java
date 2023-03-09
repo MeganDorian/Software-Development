@@ -1,6 +1,5 @@
-package modules;
+package org.itmo.modules;
 
-import org.itmo.modules.Reader;
 import org.junit.jupiter.api.Test;
 
 import java.io.ByteArrayInputStream;

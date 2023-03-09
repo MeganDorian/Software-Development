@@ -29,42 +29,40 @@ public class Executor {
     }
     
     public boolean run(List<CommandInfo> allCommands) {
-        if(!allCommands.isEmpty()) {
+        if (!allCommands.isEmpty()) {
             try {
-                for (CommandInfo command: allCommands) {
+                for (CommandInfo command : allCommands) {
                     switch (command.getCommandName()) {
-                        case "cat" -> {
+                        case "cat": {
                             Cat cat = new Cat(command);
                             cat.execute();
                         }
-                        case "echo" -> {
+                        case "echo": {
                             Echo echo = new Echo(command);
                             echo.execute();
                         }
-                        case "exit" -> {
+                        case "exit": {
                             Exit exit = new Exit();
                             exit.execute();
                             return false;
                         }
-                        case "pwd" -> {
+                        case "pwd": {
                             Pwd pwd = new Pwd(command);
                             pwd.execute();
                         }
-                        case "wc" -> {
+                        case "wc": {
                             Wc wc = new Wc(command);
                             wc.execute();
                         }
-                        default -> {
+                        default: {
                             External external = new External(command);
                             external.execute();
                         }
                     }
                 }
-            } catch (CatFileNotFoundException | WcFileNotFoundException | ExternalException e)
-            {
+            } catch (CatFileNotFoundException | WcFileNotFoundException | ExternalException e) {
                 System.out.println(e.getMessage());
-            }  catch (Exception e)
-            {
+            } catch (Exception e) {
                 e.printStackTrace();
                 return false;
             }
@@ -75,11 +73,9 @@ public class Executor {
                 line = FileUtils.loadLineFromFile(fInfo);
             }
         }
-        try
-        {
+        try {
             CommandResultSaver.clearCommandResult();
-        } catch (IOException e)
-        {
+        } catch (IOException e) {
             throw new RuntimeException(e);
         }
         return true;

@@ -5,7 +5,6 @@ import org.itmo.exceptions.ExternalException;
 import org.itmo.utils.CommandInfo;
 import org.itmo.utils.CommandResultSaver;
 
-
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.InputStreamReader;
@@ -45,13 +44,12 @@ public class External implements Command {
                 builder.command("sh", "-c", name + params.toString());
             }
             builder.directory(new File(System.getProperty("user.home")));
-            //        builder.redirectInput()   //?
             Process process = builder.start();
             if (process.waitFor() != 0)
             {
                 throw new ExternalException("Command not found");
             }
-            var reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+            BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
             String line;
             while ((line = reader.readLine()) != null) {
                 CommandResultSaver.saveCommandResult(line, true);

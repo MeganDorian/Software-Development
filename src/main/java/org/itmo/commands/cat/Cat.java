@@ -59,7 +59,7 @@ public class Cat implements Command {
                 for (String fileName : params) {
                     File file = new File(fileName);
                     if (!file.exists() || !file.isFile()) {
-                        throw new CatFileNotFoundException("Cat command did not found with name " + fileName);
+                        throw new CatFileNotFoundException("Cat command did not found file with name " + fileName);
                     }
                     try (BufferedReader reader = new BufferedReader(new FileReader(fileName))) {
                         String l = reader.readLine();

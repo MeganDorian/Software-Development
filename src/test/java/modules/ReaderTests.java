@@ -13,9 +13,8 @@ public class ReaderTests {
     
     @Test
     public void shouldReadFromConsole() {
-        InputStream forTests;
         String generatedString = "test";
-        forTests = new ByteArrayInputStream((generatedString + "\n").getBytes());
+        InputStream forTests = new ByteArrayInputStream((generatedString + "\n").getBytes());
         System.setIn(forTests);
         
         Reader reader = new Reader();

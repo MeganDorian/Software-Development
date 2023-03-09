@@ -1,0 +1,8 @@
+Usage: cat [OPTION]... [FILE]...
+Concatenate FILE(s) to standard output.
+
+With no FILE read standard input.
+
+    -e              - display $ at end of each line
+    -n              - number all output lines
+    --h, --help     - display this help and exit

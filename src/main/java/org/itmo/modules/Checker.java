@@ -3,10 +3,12 @@ package org.itmo.modules;
 import org.itmo.commands.Commands;
 import org.itmo.commands.cat.CatFlags;
 import org.itmo.commands.pwd.PwdFlags;
+import org.itmo.exceptions.FlagNotFound;
 import org.itmo.utils.CommandInfo;
 
 import java.io.File;
-import java.util.Arrays;
+import java.io.IOException;
+import java.util.List;
 
 /**
  * Check commands and their flags
@@ -18,56 +20,46 @@ public class Checker {
      * @param command - information about command
      * @return true if the command is valid, false otherwise
      */
-    public boolean checkCommand(CommandInfo command) {
-        if(Arrays.stream(Commands.values()).toList().contains(command.getCommandName())) {
-            switch (command.getCommandName())
-            {
-                case "cat" ->
-                {
-                    for (int i = 0; i < command.getFlags().size(); i++)
-                    {
-                        if (!CatFlags.isBelongs(command.getParams().get(i)))
-                        {
-                            System.err.println("cat: unrecognized option '"
-                                                       + command.getParams().get(i) + "'");
-                            System.err.println("Try 'cat -h' for more information.");
-                            return false;
+    public boolean checkCommand(List<CommandInfo> command) throws FlagNotFound {
+        for (CommandInfo com: command) {
+            try  {
+                Commands.valueOf(com.getCommandName());
+                switch (com.getCommandName()) {
+                    case "cat" -> {
+                        for (int i = 0; i < com.getFlags().size(); i++) {
+                            if (!CatFlags.isBelongs(com.getParams().get(i))) {
+                                throw new FlagNotFound("cat: unrecognized option '"
+                                                               + com.getParams().get(i)
+                                                               + "'\nTry 'cat -h' for more information.");
+                            }
                         }
                     }
-                }
-                case "pwd" ->
-                {
-                    for (int i = 0; i < command.getFlags().size(); i++)
-                    {
-                        if (!PwdFlags.isBelongs(command.getParams().get(i)))
-                        {
-                            System.err.println("pwd: unrecognized option '"
-                                                       + command.getParams().get(i) + "'");
-                            System.err.println("Try 'pwd -h' for more information.");
-                            return false;
+                    case "pwd" -> {
+                        for (int i = 0; i < com.getFlags().size(); i++) {
+                            if (!PwdFlags.isBelongs(com.getParams().get(i))) {
+                                throw new FlagNotFound("pwd: unrecognized option '"
+                                                               + com.getParams().get(i)
+                                                               + "'\nTry 'pwd -h' for more information.");
+                            }
                         }
                     }
-                }
-                case "wc" ->
-                {
-//                    add with wc command
-//                    for (int i = 0; i < command.getFlags().size(); i++)
-//                    {
-//                        if (!WcFlags.isBelongs(command.getParams().get(i)))
-//                        {
-//                            System.err.println("wc: unrecognized option '"
-//                                                       + command.getParams().get(i) + "'");
-//                            System.err.println("Try 'wc -h' for more information.");
-//                            return false;
+                    case "wc" -> {
+                        //                    add with wc command
+//                        for (int i = 0; i < com.getFlags().size(); i++) {
+//                            if (!WcFlags.isBelongs(com.getParams().get(i))) {
+//                                throw new FlagNotFound("wc: unrecognized option '"
+//                                                               + com.getParams().get(i)
+//                                                               + "'\nTry 'wc -h' for more information.");
+//                            }
 //                        }
-//                    }
+                    }
                 }
-            }
-            
-        } else {
-            File f = new File(command.getCommandName());
-            if(!f.exists() || f.isDirectory()) {
-                System.err.println("Command '" + command.getCommandName() + "' not found");
+    
+            } catch (IllegalArgumentException exception) {
+                File f = new File(com.getCommandName());
+                if (!f.exists() || f.isDirectory()) {
+                    System.err.println("Command '" + com.getCommandName() + "' not found");
+                }
             }
         }
         return true;

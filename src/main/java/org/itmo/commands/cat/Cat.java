@@ -87,7 +87,7 @@ public class Cat implements Command {
     @Override
     public boolean printHelp() {
         if (!flags.isEmpty() && (flags.contains(CatFlags.HELP) || flags.contains(CatFlags.H))) {
-            FileInfo helpInfo = FileUtils.getFileInfo(ResourcesLoader.getProperty(Commands.cat + ".help"));
+            FileInfo helpInfo = FileUtils.getFileInfo(ResourcesLoader.getProperty(Commands.cat + ".help"), true);
             while (helpInfo.getPosition() < helpInfo.getFileSize()) {
                 Optional<String> line = FileUtils.loadLineFromFile(helpInfo);
                 line.ifPresent(l -> CommandResultSaver.saveCommandResult(l, true));

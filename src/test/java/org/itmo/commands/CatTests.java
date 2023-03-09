@@ -85,7 +85,7 @@ public class CatTests {
     public void shouldGetFileContentWithFlags() throws URISyntaxException {
         File file = new File(Objects.requireNonNull(
                 this.getClass().getClassLoader().getResource("cat/cat3")).toURI());
-        FileInfo fileInfo = FileUtils.getFileInfo("cat/cat3");
+        FileInfo fileInfo = FileUtils.getFileInfo("cat/cat3", true);
         
         StringBuilder content = new StringBuilder();
         int lineCount = 1;

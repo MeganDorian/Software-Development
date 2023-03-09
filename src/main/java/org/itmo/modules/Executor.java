@@ -68,7 +68,7 @@ public class Executor {
                 e.printStackTrace();
                 return false;
             }
-            FileInfo fInfo = FileUtils.getFileInfo(CommandResultSaver.getResult().toFile().getPath());
+            FileInfo fInfo = FileUtils.getFileInfo(CommandResultSaver.getResult().toFile().getPath(), false);
             Optional<String> line = FileUtils.loadLineFromFile(fInfo);
             while (line.isPresent()) {
                 System.out.println(line.get());

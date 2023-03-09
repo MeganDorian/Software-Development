@@ -110,7 +110,7 @@ public class Wc implements Command {
     @Override
     public boolean printHelp() {
         if (!flags.isEmpty() && (flags.contains(WcFlags.HELP) || flags.contains(WcFlags.H))) {
-            FileInfo helpInfo = FileUtils.getFileInfo(ResourcesLoader.getProperty(Commands.wc + ".help"));
+            FileInfo helpInfo = FileUtils.getFileInfo(ResourcesLoader.getProperty(Commands.wc + ".help"), true);
             while (helpInfo.getPosition() < helpInfo.getFileSize()) {
                 Optional<String> line = FileUtils.loadLineFromFile(helpInfo);
                 line.ifPresent(l -> CommandResultSaver.saveCommandResult(l, true));

@@ -3,8 +3,8 @@ package org.itmo.utils;
 import lombok.experimental.UtilityClass;
 
 import java.io.*;
+import java.net.URI;
 import java.net.URISyntaxException;
-import java.net.URL;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -15,18 +15,19 @@ import java.util.Optional;
 public class FileUtils {
     /**
      * Finds file in the resources folder and collects information about it
+     *
      * @param filename name of file
      * @return FileInfo with information about file
      */
-    public FileInfo getFileInfo(String filename) {
-        URL url = CommandResultSaver.class.getClassLoader().getResource(filename);
+    public FileInfo getFileInfo(String filename, boolean fromResources) {
         try {
-            File file = new File(Objects.requireNonNull(url).toURI());
+            URI uri =  Objects.requireNonNull(FileUtils.class.getClassLoader().getResource(filename).toURI());
+            File file = new File(fromResources ? uri.getPath() : filename);
             if (!file.exists() || !file.isFile()) {
                 throw new FileNotFoundException("No file with name" + filename + " found");
             }
-            return new FileInfo(filename, file.length());
-        } catch (URISyntaxException | FileNotFoundException e) {
+            return new FileInfo(file.getAbsolutePath(), file.length());
+        } catch (FileNotFoundException | URISyntaxException e) {
             throw new RuntimeException(e);
         }
     }
@@ -47,12 +48,12 @@ public class FileUtils {
     
     /**
      * Reads one line from the file from the pos
+     *
      * @param info FileInfo with information about file
      * @return one line from the file or null if end of file reached
      */
     public Optional<String> loadLineFromFile(FileInfo info) {
-        URL url = CommandResultSaver.class.getClassLoader().getResource(info.getFilename());
-        try (RandomAccessFile file = new RandomAccessFile(new File(Objects.requireNonNull(url).toURI()), "r")) {
+        try (RandomAccessFile file = new RandomAccessFile(new File(info.getFilename()), "r")) {
             if (info.getPosition() < file.length()) {
                 file.seek(info.getPosition());
                 String r = file.readLine();
@@ -61,13 +62,14 @@ public class FileUtils {
             } else {
                 return Optional.empty();
             }
-        } catch (IOException | URISyntaxException e) {
+        } catch (IOException e) {
             throw new RuntimeException(e);
         }
     }
     
     /**
      * Loads content from the file. Use this if you sure that file isn't large
+     *
      * @param f file to read
      * @return file content
      */

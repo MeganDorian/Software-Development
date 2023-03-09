@@ -32,7 +32,7 @@ public class Pwd implements Command {
     @Override
     public boolean printHelp() {
         if (!flags.isEmpty() && flags.contains(PwdFlags.HELP)) {
-            FileInfo helpInfo = FileUtils.getFileInfo(ResourcesLoader.getProperty(Commands.pwd + ".help"));
+            FileInfo helpInfo = FileUtils.getFileInfo(ResourcesLoader.getProperty(Commands.pwd + ".help"), true);
             while (helpInfo.getPosition() < helpInfo.getFileSize()) {
                 Optional<String> line = FileUtils.loadLineFromFile(helpInfo);
                 line.ifPresent(l -> CommandResultSaver.saveCommandResult(l, true));

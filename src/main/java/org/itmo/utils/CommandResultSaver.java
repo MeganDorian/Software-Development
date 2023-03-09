@@ -1,32 +1,38 @@
 package org.itmo.utils;
 
+import lombok.Getter;
 import lombok.experimental.UtilityClass;
 
-import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.net.URISyntaxException;
-import java.net.URL;
+import java.io.PrintWriter;
 import java.nio.charset.StandardCharsets;
-import java.util.Objects;
+import java.nio.file.Files;
+import java.nio.file.Path;
 
 /**
  * Saves result of the command to the temporary file
  */
 @UtilityClass
 public class CommandResultSaver {
-    private static final String commandResult = ResourcesLoader.getProperty("commandResult");
+    
+    private final String commandResult = ResourcesLoader.getProperty("commandResult");
+    
+    @Getter
+    private Path result;
     
     /**
      * Saves result of command execution to temporary file
      *
      * @param content content to save
      */
-    public void saveCommandResult(String content) {
-        URL resource = CommandResultSaver.class.getClassLoader().getResource(commandResult);
-        try (FileOutputStream fileOutputStream = new FileOutputStream(new File(Objects.requireNonNull(resource).toURI()), true)) {
-            fileOutputStream.write(content.getBytes(StandardCharsets.UTF_8));
-        } catch (IOException | URISyntaxException e) {
+    public void saveCommandResult(String content, boolean appendEndOfLine) {
+        try {
+            result = result == null ? Files.createTempFile(commandResult, ".cli") : result;
+            try (FileOutputStream fileOutputStream = new FileOutputStream(result.toFile(), true)) {
+                fileOutputStream.write((content + (appendEndOfLine ? "\n" : "")).getBytes(StandardCharsets.UTF_8));
+            }
+        } catch (IOException e) {
             throw new RuntimeException(e);
         }
     }
@@ -37,7 +43,11 @@ public class CommandResultSaver {
      * @throws IOException if can't get access to file
      */
     public void clearCommandResult() throws IOException {
-        new FileOutputStream(ResourcesLoader.getProperty(commandResult)).close();
+        if (result != null) {
+            try (PrintWriter print = new PrintWriter(result.toFile())) {
+                print.print("");
+            }
+        }
     }
     
     /**
@@ -47,6 +57,6 @@ public class CommandResultSaver {
      * false - otherwise
      */
     public boolean deleteCommandResult() {
-        return new File(ResourcesLoader.getProperty(commandResult)).delete();
+        return result != null && result.toFile().delete();
     }
 }

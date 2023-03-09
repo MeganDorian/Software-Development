@@ -16,7 +16,7 @@ public enum PwdFlags {
      * @return <b>true</b> if flag belongs to the supported PWD flags <br>
      * <b>false</b> if not
      */
-    boolean isBelongs(String flag) {
+    public static boolean isBelongs(String flag) {
         try {
             PwdFlags.valueOf(flag.replaceAll("^-{1,2}", "").toUpperCase());
             return true;

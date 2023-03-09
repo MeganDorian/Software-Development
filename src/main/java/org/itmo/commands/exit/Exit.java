@@ -21,4 +21,9 @@ public class Exit implements Command {
             throw new IOException("Can't delete temporary file");
         }
     }
+    
+    @Override
+    public boolean printHelp() {
+        return false;
+    }
 }

@@ -32,7 +32,7 @@ public enum CatFlags {
      * @return <b>true</b> if flag belongs to the supported CAT flags <br>
      * <b>false</b> if not
      */
-    boolean isBelongs(String flag) {
+    public static boolean isBelongs(String flag) {
         try {
             CatFlags.valueOf(flag.replaceAll("^-{1,2}", "").toUpperCase());
             return true;

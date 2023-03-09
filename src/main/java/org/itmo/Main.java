@@ -6,6 +6,7 @@ import org.itmo.modules.Executor;
 import org.itmo.modules.Parser;
 import org.itmo.modules.Reader;
 import org.itmo.utils.CommandInfo;
+import org.itmo.utils.CommandResultSaver;
 
 import java.util.List;
 
@@ -14,20 +15,21 @@ public class Main {
         Reader reader = new Reader();
         Parser parser = new Parser();
         Checker checker = new Checker();
-        Executor executor = null;
+        Executor executor = new Executor();
+        List<CommandInfo> allCommands;
         do
         {
             String command = reader.readInput();
-            List<CommandInfo> allCommands = parser.commandParser(parser.substitutor(command).toString());
+            allCommands = parser.commandParser(parser.substitutor(command).toString());
             try
             {
                 checker.checkCommand(allCommands);
-                executor = new Executor(allCommands);
             } catch (FlagNotFoundException e)
             {
                 e.printStackTrace();
                 allCommands.clear();
             }
-        } while (executor != null && executor.run());
+        } while (executor.run(allCommands));
+        CommandResultSaver.deleteCommandResult();
     }
 }

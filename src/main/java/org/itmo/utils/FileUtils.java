@@ -19,14 +19,13 @@ public class FileUtils {
      * @return FileInfo with information about file
      */
     public FileInfo getFileInfo(String filename) {
-        URL url = CommandResultSaver.class.getClassLoader().getResource(filename);
         try {
-            File file = new File(Objects.requireNonNull(url).toURI());
+            File file = new File(filename);
             if (!file.exists() || !file.isFile()) {
                 throw new FileNotFoundException("No file with name" + filename + " found");
             }
             return new FileInfo(filename, file.length());
-        } catch (URISyntaxException | FileNotFoundException e) {
+        } catch (FileNotFoundException e) {
             throw new RuntimeException(e);
         }
     }
@@ -51,8 +50,7 @@ public class FileUtils {
      * @return one line from the file or null if end of file reached
      */
     public Optional<String> loadLineFromFile(FileInfo info) {
-        URL url = CommandResultSaver.class.getClassLoader().getResource(info.getFilename());
-        try (RandomAccessFile file = new RandomAccessFile(new File(Objects.requireNonNull(url).toURI()), "r")) {
+        try (RandomAccessFile file = new RandomAccessFile(new File(info.getFilename()), "r")) {
             if (info.getPosition() < file.length()) {
                 file.seek(info.getPosition());
                 String r = file.readLine();
@@ -61,7 +59,7 @@ public class FileUtils {
             } else {
                 return Optional.empty();
             }
-        } catch (IOException | URISyntaxException e) {
+        } catch (IOException e) {
             throw new RuntimeException(e);
         }
     }

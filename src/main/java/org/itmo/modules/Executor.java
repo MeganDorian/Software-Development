@@ -11,26 +11,24 @@ import org.itmo.exceptions.ExternalException;
 import org.itmo.exceptions.WcFileNotFoundException;
 import org.itmo.utils.CommandInfo;
 import org.itmo.utils.CommandResultSaver;
+import org.itmo.utils.FileInfo;
 import org.itmo.utils.FileUtils;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Optional;
 
 public class Executor {
     
-    List<CommandInfo> allCommands;
-    
-    public Executor(List<CommandInfo> commands) {
-        allCommands = commands;
+    public Executor() {
         try {
             CommandResultSaver.createCommandResultFile();
         } catch (IOException e) {
-            allCommands.clear();
             throw new RuntimeException(e);
         }
     }
     
-    public boolean run() {
+    public boolean run(List<CommandInfo> allCommands) {
         if(!allCommands.isEmpty()) {
             try {
                 for (CommandInfo command: allCommands) {
@@ -64,15 +62,26 @@ public class Executor {
                 }
             } catch (CatFileNotFoundException | WcFileNotFoundException | ExternalException e)
             {
-                e.printStackTrace();
+                System.out.println(e.getMessage());
             }  catch (Exception e)
             {
                 e.printStackTrace();
                 return false;
             }
-            System.out.println(FileUtils.loadFullContent(CommandResultSaver.getResult().toFile()));
+            FileInfo fInfo = FileUtils.getFileInfo(CommandResultSaver.getResult().toFile().getPath());
+            Optional<String> line = FileUtils.loadLineFromFile(fInfo);
+            while (line.isPresent()) {
+                System.out.println(line.get());
+                line = FileUtils.loadLineFromFile(fInfo);
+            }
         }
-        CommandResultSaver.deleteCommandResult();
+        try
+        {
+            CommandResultSaver.clearCommandResult();
+        } catch (IOException e)
+        {
+            throw new RuntimeException(e);
+        }
         return true;
     }
     

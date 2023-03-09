@@ -71,8 +71,8 @@ public class Executor {
                 return false;
             }
             System.out.println(FileUtils.loadFullContent(CommandResultSaver.getResult().toFile()));
-            CommandResultSaver.deleteCommandResult();
         }
+        CommandResultSaver.deleteCommandResult();
         return true;
     }
     

@@ -30,26 +30,34 @@ public class External implements Command {
      * Run users command
      */
     @Override
-    public void execute() throws Exception {
-        ProcessBuilder builder = new ProcessBuilder();
-        if (isWindows) {
-            builder.command("cmd.exe", "/c", name + params.toString());
-        } else {
-            builder.command("sh", "-c", name + params.toString());
-        }
-        builder.directory(new File(System.getProperty("user.home")));
-//        builder.redirectInput()   //?
-        Process process = builder.start();
-        process.waitFor();
-        try (var reader = new BufferedReader(new InputStreamReader(process.getInputStream())))
+    public void execute() throws ExternalException {
+        try
         {
-            String line;
-            while ((line = reader.readLine()) != null)
+    
+    
+            ProcessBuilder builder = new ProcessBuilder();
+            if (isWindows)
             {
+                builder.command("cmd.exe", "/c", name + params.toString());
+            }
+            else
+            {
+                builder.command("sh", "-c", name + params.toString());
+            }
+            builder.directory(new File(System.getProperty("user.home")));
+            //        builder.redirectInput()   //?
+            Process process = builder.start();
+            if (process.waitFor() != 0)
+            {
+                throw new ExternalException("Command not found");
+            }
+            var reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+            String line;
+            while ((line = reader.readLine()) != null) {
                 CommandResultSaver.saveCommandResult(line, true);
             }
         } catch (Exception ex) {
-            throw new ExternalException(ex);
+            throw new ExternalException(ex.getMessage());
         }
     }
     

@@ -7,7 +7,7 @@ public class ExternalException extends Exception{
      *
      * @param message cause of exception
      */
-    public ExternalException(Exception message) {
+    public ExternalException(String message) {
         super(message);
     }
 }

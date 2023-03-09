@@ -1,6 +1,7 @@
 package org.itmo.commands.external;
 
 import org.itmo.commands.Command;
+import org.itmo.exceptions.ExternalException;
 import org.itmo.utils.CommandInfo;
 import org.itmo.utils.CommandResultSaver;
 
@@ -48,8 +49,14 @@ public class External implements Command {
                 CommandResultSaver.saveCommandResult(line, true);
             }
         } catch (Exception ex) {
-            throw new RuntimeException(ex);
+            throw new ExternalException(ex);
         }
+    }
+    
+    @Override
+    public boolean printHelp ()
+    {
+        return false;
     }
     
 }

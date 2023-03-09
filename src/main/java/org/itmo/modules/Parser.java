@@ -1,5 +1,10 @@
 package org.itmo.modules;
 
+import org.itmo.utils.CommandInfo;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -13,16 +18,22 @@ public class Parser {
     Pattern patternSingleQuotes;
     Pattern patternDoubleQuotes;
     Pattern patternVariables;
+    Pattern patternVariableAddition;
+    Pattern patternFlag;
     
     Matcher matcherSingleQuotes;
     Matcher matcherDoubleQuotes;
     Matcher matcherVariables;
+    Matcher matcherVariableAddition;
+    Matcher matcherFlag;
     
     public Parser() {
         localStorage = new LocalStorage();
         patternSingleQuotes = Pattern.compile("'[^']*'");
         patternDoubleQuotes = Pattern.compile("\"[^\"]*\"");
-        patternVariables = Pattern.compile("\\$[^\\$ ] ");
+        patternVariables = Pattern.compile("\\$[^$ ]+ *");
+        patternVariableAddition = Pattern.compile("^[^= ]*=[^ ]*");
+        patternFlag = Pattern.compile("-{1,2}[^-] ");
     }
     
     /**
@@ -255,7 +266,7 @@ public class Parser {
         matcherVariables = patternVariables.matcher(line);
         while (matcherVariables.find()) {
             // add a line before the variable
-            result.append(line, index, matcherVariables.end());
+            result.append(line, index, matcherVariables.start());
             localStorage.get(line.substring(matcherVariables.start() + 1,
                                             matcherVariables.end())).ifPresentOrElse(
                     (var) -> {
@@ -271,4 +282,69 @@ public class Parser {
         }
         return result;
     }
+    
+    /**
+     * Parses the string into commands
+     *
+     * If the command is a variable initialisation/reinitialisation, it performs this
+     *
+     * @param line processing string
+     * @return command name, flags and parameters if it is a command
+     * and an empty list if it is a variable initialisation/reinitialisation
+     */
+    public List<CommandInfo> commandParser(String line)
+    {
+        List<CommandInfo> commands = new ArrayList<>();
+        matcherVariableAddition = patternVariableAddition.matcher(line);
+        if(matcherVariableAddition.find())
+        {
+            int indexEq = line.indexOf("=");
+            int indexSp = line.indexOf(" ");
+            if(indexSp == -1) {
+                indexSp = line.length();
+            }
+            localStorage.set(line.substring(0, indexEq), line.substring(indexEq + 1, indexSp));
+        } else
+        {
+            CommandInfo commandInfo;
+            int index = line.indexOf(" ");
+            if(index == -1)
+            {
+                commands.add(new CommandInfo(line, new ArrayList<>(), new ArrayList<>()));
+            }
+            else {
+                String name = line.substring(0, index);
+                String newLine = line.substring(index);
+                matcherFlag = patternFlag.matcher(newLine);
+                index = 0;
+                List<String> flags = new ArrayList<>();
+                List<String> param = new ArrayList<>();
+                while (matcherFlag.find()) {
+                    if(matcherFlag.start() - index > 0) {
+                        List<String> all = List.of(newLine.substring(index, matcherFlag.start())
+                                                           .split("[ ]+"));
+                        for(int i = 0; i < all.size(); i++) {
+                            if(all.get(i).length() > 0) {
+                                param.add(all.get(i));
+                            }
+                        }
+                    }
+                    flags.add(newLine.substring(matcherFlag.start(), matcherFlag.end() - 1));
+                    index = matcherFlag.end();
+                }
+                if(newLine.length() - index > 0) {
+                    List<String> all = List.of(newLine.substring(index, newLine.length())
+                            .split("[ ]+"));
+                    for(int i = 0; i < all.size(); i++) {
+                        if(all.get(i).length() > 0) {
+                            param.add(all.get(i));
+                        }
+                    }
+                }
+                commands.add(new CommandInfo(name, flags, param));
+            }
+        }
+        return commands;
+    }
+    
 }

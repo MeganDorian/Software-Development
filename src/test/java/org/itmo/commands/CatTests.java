@@ -1,4 +1,4 @@
-package commands;
+package org.itmo.commands;
 
 import org.itmo.commands.cat.Cat;
 import org.itmo.exceptions.CatFileNotFoundException;
@@ -7,7 +7,7 @@ import org.itmo.utils.CommandResultSaver;
 import org.itmo.utils.FileInfo;
 import org.itmo.utils.FileUtils;
 import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 import java.io.*;
@@ -19,11 +19,12 @@ import java.util.Objects;
 import static org.junit.jupiter.api.Assertions.*;
 
 public class CatTests {
-    InputStream inputStream;
-    PrintStream outputStream;
+    static InputStream inputStream;
+    static PrintStream outputStream;
     
-    @BeforeEach
-    public void setUp() {
+    @BeforeAll
+    public static void setUp() throws IOException {
+        CommandResultSaver.createCommandResultFile();
         inputStream = System.in;
         outputStream = System.out;
     }

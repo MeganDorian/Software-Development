@@ -1,4 +1,4 @@
-package commands;
+package org.itmo.commands;
 
 import org.itmo.commands.echo.Echo;
 import org.itmo.utils.CommandInfo;

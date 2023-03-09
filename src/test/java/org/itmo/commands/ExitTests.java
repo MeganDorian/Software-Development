@@ -1,5 +1,6 @@
-package org.itmo.commands.exit;
+package org.itmo.commands;
 
+import org.itmo.commands.exit.Exit;
 import org.itmo.utils.CommandResultSaver;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

@@ -19,7 +19,7 @@ public class CommandResultSaver {
     private final String commandResult = ResourcesLoader.getProperty("commandResult");
     
     @Getter
-    private Path result;
+    private static Path result;
     
     public void createCommandResultFile() throws IOException {
         result = Files.createTempFile(commandResult, ".cli");

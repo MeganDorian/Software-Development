@@ -21,8 +21,13 @@ public class FileUtils {
      */
     public FileInfo getFileInfo(String filename, boolean fromResources) {
         try {
-            URI uri =  Objects.requireNonNull(FileUtils.class.getClassLoader().getResource(filename).toURI());
-            File file = new File(fromResources ? uri.getPath() : filename);
+            File file;
+            if (fromResources) {
+                URI uri = Objects.requireNonNull(FileUtils.class.getClassLoader().getResource(filename).toURI());
+                file = new File(uri.getPath());
+            } else {
+                file = new File(filename);
+            }
             if (!file.exists() || !file.isFile()) {
                 throw new FileNotFoundException("No file with name" + filename + " found");
             }

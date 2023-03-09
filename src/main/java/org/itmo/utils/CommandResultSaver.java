@@ -31,10 +31,8 @@ public class CommandResultSaver {
      * @param content content to save
      */
     public void saveCommandResult(String content, boolean appendEndOfLine) {
-        try {
-            try (FileOutputStream fileOutputStream = new FileOutputStream(result.toFile(), true)) {
-                fileOutputStream.write((content + (appendEndOfLine ? "\n" : "")).getBytes(StandardCharsets.UTF_8));
-            }
+        try (FileOutputStream fileOutputStream = new FileOutputStream(result.toFile(), true)) {
+            fileOutputStream.write((content + (appendEndOfLine ? "\n" : "")).getBytes(StandardCharsets.UTF_8));
         } catch (IOException e) {
             throw new RuntimeException(e);
         }

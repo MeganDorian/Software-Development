@@ -23,16 +23,22 @@ public class Pwd implements Command {
     
     @Override
     public void execute() {
+        if (!printHelp()) {
+            String currentDirectory = System.getProperty("user.dir");
+            CommandResultSaver.saveCommandResult(currentDirectory, false);
+        }
+    }
+    
+    @Override
+    public boolean printHelp() {
         if (!flags.isEmpty() && flags.contains(PwdFlags.HELP)) {
             FileInfo helpInfo = FileUtils.getFileInfo(ResourcesLoader.getProperty(Commands.pwd + ".help"));
             while (helpInfo.getPosition() < helpInfo.getFileSize()) {
                 Optional<String> line = FileUtils.loadLineFromFile(helpInfo);
                 line.ifPresent(l -> CommandResultSaver.saveCommandResult(l, true));
             }
-            return;
+            return true;
         }
-        
-        String currentDirectory = System.getProperty("user.dir");
-        CommandResultSaver.saveCommandResult(currentDirectory, false);
+        return false;
     }
 }

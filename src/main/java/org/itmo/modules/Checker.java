@@ -3,11 +3,10 @@ package org.itmo.modules;
 import org.itmo.commands.Commands;
 import org.itmo.commands.cat.CatFlags;
 import org.itmo.commands.pwd.PwdFlags;
-import org.itmo.exceptions.FlagNotFound;
+import org.itmo.exceptions.FlagNotFoundException;
 import org.itmo.utils.CommandInfo;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.List;
 
 /**
@@ -20,7 +19,7 @@ public class Checker {
      * @param command - information about command
      * @return true if the command is valid, false otherwise
      */
-    public boolean checkCommand(List<CommandInfo> command) throws FlagNotFound {
+    public boolean checkCommand(List<CommandInfo> command) throws FlagNotFoundException {
         for (CommandInfo com: command) {
             try  {
                 Commands.valueOf(com.getCommandName());
@@ -28,7 +27,7 @@ public class Checker {
                     case "cat" -> {
                         for (int i = 0; i < com.getFlags().size(); i++) {
                             if (!CatFlags.isBelongs(com.getParams().get(i))) {
-                                throw new FlagNotFound("cat: unrecognized option '"
+                                throw new FlagNotFoundException("cat: unrecognized option '"
                                                                + com.getParams().get(i)
                                                                + "'\nTry 'cat -h' for more information.");
                             }
@@ -37,7 +36,7 @@ public class Checker {
                     case "pwd" -> {
                         for (int i = 0; i < com.getFlags().size(); i++) {
                             if (!PwdFlags.isBelongs(com.getParams().get(i))) {
-                                throw new FlagNotFound("pwd: unrecognized option '"
+                                throw new FlagNotFoundException("pwd: unrecognized option '"
                                                                + com.getParams().get(i)
                                                                + "'\nTry 'pwd -h' for more information.");
                             }

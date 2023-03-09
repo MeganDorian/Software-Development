@@ -36,7 +36,7 @@ public class CatTests {
     
     @Test
     public void shouldReadFromInputStream() {
-        CommandInfo info = new CommandInfo("cat/cat1", Collections.emptyList(), Collections.emptyList());
+        CommandInfo info = new CommandInfo("cat", Collections.emptyList(), Collections.emptyList());
         String expected = "test";
         InputStream forTests = new ByteArrayInputStream((expected + "\n").getBytes());
         System.setIn(forTests);
@@ -53,7 +53,7 @@ public class CatTests {
                 "-e              - display $ at end of each line    " +
                 "-n              - number all output lines    " +
                 "--h, --help     - display this help and exit";
-        CommandInfo info = new CommandInfo("cat/cat1", List.of("--help"), Collections.emptyList());
+        CommandInfo info = new CommandInfo("cat", List.of("--help"), Collections.emptyList());
         Cat cat = new Cat(info);
         assertDoesNotThrow(cat::execute);
         
@@ -109,7 +109,7 @@ public class CatTests {
     
     @Test
     public void shouldThrowFileNotFoundException() {
-        CommandInfo info = new CommandInfo("cat/cat1", List.of("-e", "-n"), List.of("fdfsdfe"));
+        CommandInfo info = new CommandInfo("cat", List.of("-e", "-n"), List.of("fdfsdfe"));
         Cat cat = new Cat(info);
         assertThrows(CatFileNotFoundException.class, cat::execute);
     }

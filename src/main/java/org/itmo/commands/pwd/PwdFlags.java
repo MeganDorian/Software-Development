@@ -10,7 +10,7 @@ public enum PwdFlags {
     HELP;
     
     /**
-     * Checks if flag belongs to any supported cat flags
+     * Checks if flag belongs to any supported pwd flags
      *
      * @param flag name of flag to check
      * @return <b>true</b> if flag belongs to the supported PWD flags <br>

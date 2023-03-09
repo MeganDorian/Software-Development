@@ -33,4 +33,9 @@ public class Echo implements Command {
                     false));
         }
     }
+    
+    @Override
+    public boolean printHelp() {
+        return false;
+    }
 }

@@ -37,57 +37,64 @@ public class Cat implements Command {
      */
     @Override
     public void execute() throws CatFileNotFoundException {
+        if (!printHelp()) {
+            
+            StringBuilder line = new StringBuilder();
+            boolean addNumber = flags.contains(CatFlags.E);
+            boolean addDollarSymbol = flags.contains(CatFlags.E);
+            int lineNumber = 1;
+            
+            if (params.isEmpty()) {
+                if (addNumber) {
+                    line.append("\t").append(lineNumber).append("\t\t");
+                }
+                line.append(new Reader().readInput());
+                
+                if (addDollarSymbol) {
+                    line.append("$");
+                }
+                CommandResultSaver.saveCommandResult(line.toString(), false);
+            } else {
+                
+                for (String fileName : params) {
+                    File file = new File(fileName);
+                    if (!file.exists() || !file.isFile()) {
+                        throw new CatFileNotFoundException("Cat command did not found with name " + fileName);
+                    }
+                    try (BufferedReader reader = new BufferedReader(new FileReader(fileName))) {
+                        String l = reader.readLine();
+                        while (l != null) {
+                            if (addNumber) {
+                                line.append("\t").append(lineNumber).append("\t\t");
+                                lineNumber++;
+                            }
+                            line.append(l);
+                            if (addDollarSymbol) {
+                                line.append("$");
+                            }
+                            CommandResultSaver.saveCommandResult(line.toString(), true);
+                            line.delete(0, line.length());
+                            l = reader.readLine();
+                        }
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
+                }
+            }
+        }
+    }
+    
+    @Override
+    public boolean printHelp() {
         if (!flags.isEmpty() && (flags.contains(CatFlags.HELP) || flags.contains(CatFlags.H))) {
             FileInfo helpInfo = FileUtils.getFileInfo(ResourcesLoader.getProperty(Commands.cat + ".help"));
             while (helpInfo.getPosition() < helpInfo.getFileSize()) {
                 Optional<String> line = FileUtils.loadLineFromFile(helpInfo);
                 line.ifPresent(l -> CommandResultSaver.saveCommandResult(l, true));
             }
-            return;
+            return true;
         }
-        
-        StringBuilder line = new StringBuilder();
-        boolean addNumber = flags.contains(CatFlags.E);
-        boolean addDollarSymbol = flags.contains(CatFlags.E);
-        int lineNumber = 1;
-        
-        if (params.isEmpty()) {
-            if (addNumber) {
-                line.append("\t").append(lineNumber).append("\t\t");
-            }
-            line.append(new Reader().readInput());
-            
-            if (addDollarSymbol) {
-                line.append("$");
-            }
-            CommandResultSaver.saveCommandResult(line.toString(), false);
-        } else {
-            
-            for (String fileName : params) {
-                File file = new File(fileName);
-                if (!file.exists() || !file.isFile()) {
-                    throw new CatFileNotFoundException("File not found with name " + fileName);
-                }
-                try (BufferedReader reader = new BufferedReader(new FileReader(fileName))) {
-                    String l = reader.readLine();
-                    while (l != null) {
-                        if (addNumber) {
-                            line.append("\t").append(lineNumber).append("\t\t");
-                            lineNumber++;
-                        }
-                        line.append(l);
-                        if (addDollarSymbol) {
-                            line.append("$");
-                        }
-                        CommandResultSaver.saveCommandResult(line.toString(), true);
-                        line.delete(0, line.length());
-                        l = reader.readLine();
-                    }
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
-                }
-            }
-        }
+        return false;
     }
     
 }

@@ -24,7 +24,7 @@ public class Cat implements Command {
     public Cat(CommandInfo commandInfo) {
         flags = new ArrayList<>();
         commandInfo.getFlags().forEach(flag -> {
-            flags.add(CatFlags.valueOf(flag.replaceAll("-", "").toUpperCase()));
+            flags.add(CatFlags.valueOf(flag.replaceAll("^-{1,2}", "").toUpperCase()));
         });
         params = commandInfo.getParams();
     }
@@ -37,11 +37,11 @@ public class Cat implements Command {
      */
     @Override
     public void execute() throws CatFileNotFoundException {
-        if (!flags.isEmpty() && flags.contains(CatFlags.HELP) || flags.contains(CatFlags.H)) {
+        if (!flags.isEmpty() && (flags.contains(CatFlags.HELP) || flags.contains(CatFlags.H))) {
             FileInfo helpInfo = FileUtils.getFileInfo(ResourcesLoader.getProperty(Commands.cat + ".help"));
             while (helpInfo.getPosition() < helpInfo.getFileSize()) {
                 Optional<String> line = FileUtils.loadLineFromFile(helpInfo);
-                line.ifPresent( l -> CommandResultSaver.saveCommandResult(l, true));
+                line.ifPresent(l -> CommandResultSaver.saveCommandResult(l, true));
             }
             return;
         }

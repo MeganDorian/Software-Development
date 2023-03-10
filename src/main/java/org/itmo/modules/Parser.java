@@ -33,7 +33,7 @@ public class Parser {
         patternDoubleQuotes = Pattern.compile("\"[^\"]*\"");
         patternVariables = Pattern.compile("\\$[^$ ]+ *");
         patternVariableAddition = Pattern.compile("^[^= ]*=[^ ]*");
-        patternFlag = Pattern.compile("-{1,2}[^-] ");
+        patternFlag = Pattern.compile("-{1,2}[^- ]+ *");
     }
     
     /**
@@ -314,7 +314,7 @@ public class Parser {
             }
             else {
                 String name = line.substring(0, index);
-                String newLine = line.substring(index);
+                String newLine = line.substring(index + 1);
                 matcherFlag = patternFlag.matcher(newLine);
                 index = 0;
                 List<String> flags = new ArrayList<>();
@@ -329,7 +329,7 @@ public class Parser {
                             }
                         }
                     }
-                    flags.add(newLine.substring(matcherFlag.start(), matcherFlag.end() - 1));
+                    flags.add(newLine.substring(matcherFlag.start(), matcherFlag.end()).replaceAll(" ", ""));
                     index = matcherFlag.end();
                 }
                 if(newLine.length() - index > 0) {

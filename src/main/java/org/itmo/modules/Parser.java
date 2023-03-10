@@ -246,7 +246,7 @@ public class Parser {
                 if (line.length() - startIndexSubstring > 0)
                 {
                     result.append(substitutionVariables(
-                            line.substring(startIndexSubstring, line.length())));
+                            line.substring(startIndexSubstring)));
                 }
                 startIndexSubstring = line.length();
             }
@@ -314,32 +314,42 @@ public class Parser {
             }
             else {
                 String name = line.substring(0, index);
-                String newLine = line.substring(index + 1);
-                matcherFlag = patternFlag.matcher(newLine);
-                index = 0;
                 List<String> flags = new ArrayList<>();
                 List<String> param = new ArrayList<>();
-                while (matcherFlag.find()) {
-                    if(matcherFlag.start() - index > 0) {
-                        List<String> all = List.of(newLine.substring(index, matcherFlag.start())
-                                                           .split("[ ]+"));
-                        for(int i = 0; i < all.size(); i++) {
-                            if(all.get(i).length() > 0) {
+                String newLine = line.substring(index + 1);
+                if(Checker.checkCommandIsInternal(name))
+                {
+                    matcherFlag = patternFlag.matcher(newLine);
+                    index = 0;
+                    while (matcherFlag.find())
+                    {
+                        if (matcherFlag.start() - index > 0)
+                        {
+                            List<String> all = List.of(newLine.substring(index, matcherFlag.start()).split("[ ]+"));
+                            for (int i = 0; i < all.size(); i++)
+                            {
+                                if (all.get(i).length() > 0)
+                                {
+                                    param.add(all.get(i));
+                                }
+                            }
+                        }
+                        flags.add(newLine.substring(matcherFlag.start(), matcherFlag.end()).replaceAll(" ", ""));
+                        index = matcherFlag.end();
+                    }
+                    if (newLine.length() - index > 0)
+                    {
+                        List<String> all = List.of(newLine.substring(index).split("[ ]+"));
+                        for (int i = 0; i < all.size(); i++)
+                        {
+                            if (all.get(i).length() > 0)
+                            {
                                 param.add(all.get(i));
                             }
                         }
                     }
-                    flags.add(newLine.substring(matcherFlag.start(), matcherFlag.end()).replaceAll(" ", ""));
-                    index = matcherFlag.end();
-                }
-                if(newLine.length() - index > 0) {
-                    List<String> all = List.of(newLine.substring(index, newLine.length())
-                            .split("[ ]+"));
-                    for(int i = 0; i < all.size(); i++) {
-                        if(all.get(i).length() > 0) {
-                            param.add(all.get(i));
-                        }
-                    }
+                } else {
+                    param.add(newLine);
                 }
                 commands.add(new CommandInfo(name, flags, param));
             }

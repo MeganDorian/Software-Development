@@ -3,7 +3,6 @@ package org.itmo.modules;
 import org.itmo.utils.CommandInfo;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -38,14 +37,14 @@ public class Parser {
     
     /**
      * Removes unnecessary inverted commas and substitutes variables
-     *
+     * <p>
      * If no variable is found, substitutes an empty string
      *
      * @param line -- processing string
      * @return substitution string
      */
     public StringBuilder substitutor(String line) {
-        StringBuilder result = new StringBuilder();;
+        StringBuilder result = new StringBuilder();
         matcherSingleQuotes = patternSingleQuotes.matcher(line);
         matcherDoubleQuotes = patternDoubleQuotes.matcher(line);
         int startIndexSubstring = 0;
@@ -268,13 +267,7 @@ public class Parser {
             // add a line before the variable
             result.append(line, index, matcherVariables.start());
             localStorage.get(line.substring(matcherVariables.start() + 1,
-                                            matcherVariables.end())).ifPresentOrElse(
-                    (var) -> {
-                        result.append(var);
-                    },
-                    ()->{
-                        result.append("");
-                    });
+                                            matcherVariables.end())).ifPresent(result::append);
             index = matcherVariables.end();
         }
         if(line.length() - index > 0) {
@@ -285,7 +278,7 @@ public class Parser {
     
     /**
      * Parses the string into commands
-     *
+     * <p>
      * If the command is a variable initialisation/reinitialisation, it performs this
      *
      * @param line processing string
@@ -306,7 +299,6 @@ public class Parser {
             localStorage.set(line.substring(0, indexEq), line.substring(indexEq + 1, indexSp));
         } else
         {
-            CommandInfo commandInfo;
             int index = line.indexOf(" ");
             if(index == -1)
             {
@@ -325,12 +317,12 @@ public class Parser {
                     {
                         if (matcherFlag.start() - index > 0)
                         {
-                            List<String> all = List.of(newLine.substring(index, matcherFlag.start()).split("[ ]+"));
-                            for (int i = 0; i < all.size(); i++)
+                            List<String> all = List.of(newLine.substring(index, matcherFlag.start()).split(" +"));
+                            for (String str: all)
                             {
-                                if (all.get(i).length() > 0)
+                                if (str.length() > 0)
                                 {
-                                    param.add(all.get(i));
+                                    param.add(str);
                                 }
                             }
                         }
@@ -339,12 +331,12 @@ public class Parser {
                     }
                     if (newLine.length() - index > 0)
                     {
-                        List<String> all = List.of(newLine.substring(index).split("[ ]+"));
-                        for (int i = 0; i < all.size(); i++)
+                        List<String> all = List.of(newLine.substring(index).split(" +"));
+                        for (String str: all)
                         {
-                            if (all.get(i).length() > 0)
+                            if (str.length() > 0)
                             {
-                                param.add(all.get(i));
+                                param.add(str);
                             }
                         }
                     }

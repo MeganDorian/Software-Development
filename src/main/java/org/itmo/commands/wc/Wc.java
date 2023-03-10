@@ -25,9 +25,7 @@ public class Wc implements Command {
     
     public Wc(CommandInfo commandInfo) {
         flags = new ArrayList<>();
-        commandInfo.getFlags().forEach(flag -> {
-            flags.add(WcFlags.valueOf(flag.replaceAll("^-{1,2}", "").toUpperCase()));
-        });
+        commandInfo.getFlags().forEach(flag -> flags.add(WcFlags.valueOf(flag.replaceAll("^-{1,2}", "").toUpperCase())));
         params = commandInfo.getParams();
     }
     

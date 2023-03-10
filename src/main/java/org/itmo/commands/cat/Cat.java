@@ -18,7 +18,7 @@ import java.util.Optional;
  * CAT command to work with file contents
  */
 public class Cat implements Command {
-    private final List<CatFlags> flags;
+    private List<CatFlags> flags;
     private final List<String> params;
     
     public Cat(CommandInfo commandInfo) {

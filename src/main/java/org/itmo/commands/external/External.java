@@ -12,9 +12,9 @@ import java.util.List;
 
 public class External implements Command {
     
-    private final String name;
+    private String name;
     
-    private final List<String> params;
+    private List<String> params;
     
     boolean isWindows;
     

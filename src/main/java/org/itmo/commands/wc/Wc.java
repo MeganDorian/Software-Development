@@ -20,7 +20,7 @@ import java.util.Optional;
  * WC command to count
  */
 public class Wc implements Command {
-    private final List<WcFlags> flags;
+    private List<WcFlags> flags;
     private final List<String> params;
     
     public Wc(CommandInfo commandInfo) {

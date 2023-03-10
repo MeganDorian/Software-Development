@@ -12,7 +12,7 @@ import java.util.Optional;
  * PWD command to print current directory
  */
 public class Pwd implements Command {
-    private final List<PwdFlags> flags;
+    private List<PwdFlags> flags;
     
     public Pwd(CommandInfo commandInfo) {
         flags = new ArrayList<>();
@@ -22,7 +22,7 @@ public class Pwd implements Command {
     @Override
     public void execute() {
         if (!printHelp()) {
-            String currentDirectory = FileUtils.getCurrentPath();
+            String currentDirectory = System.getProperty("user.dir");
             CommandResultSaver.saveCommandResult(currentDirectory, false);
         }
     }

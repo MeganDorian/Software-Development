@@ -16,9 +16,7 @@ public class Pwd implements Command {
     
     public Pwd(CommandInfo commandInfo) {
         flags = new ArrayList<>();
-        commandInfo.getFlags().forEach(flag -> {
-            flags.add(PwdFlags.valueOf(flag.replaceAll("^-{1,2}", "").toUpperCase()));
-        });
+        commandInfo.getFlags().forEach(flag -> flags.add(PwdFlags.valueOf(flag.replaceAll("^-{1,2}", "").toUpperCase())));
     }
     
     @Override

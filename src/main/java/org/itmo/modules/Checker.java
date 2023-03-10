@@ -21,7 +21,7 @@ public class Checker {
      * @param command - information about command
      * @return true if the command is valid, false otherwise
      */
-    public boolean checkCommand(List<CommandInfo> command) throws FlagNotFoundException, CheckerException
+    public void checkCommand(List<CommandInfo> command) throws FlagNotFoundException, CheckerException
     {
         for (CommandInfo com : command) {
             try {
@@ -70,7 +70,6 @@ public class Checker {
                 throw new CheckerException(exception);
             }
         }
-        return true;
     }
     
     /**

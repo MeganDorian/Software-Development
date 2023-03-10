@@ -88,4 +88,9 @@ public class FileUtils {
             throw new RuntimeException(e);
         }
     }
+    
+    public String getCurrentPath() {
+        return System.getProperty("user.dir");
+    }
+    
 }

@@ -24,7 +24,7 @@ public class Pwd implements Command {
     @Override
     public void execute() {
         if (!printHelp()) {
-            String currentDirectory = System.getProperty("user.dir");
+            String currentDirectory = FileUtils.getCurrentPath();
             CommandResultSaver.saveCommandResult(currentDirectory, false);
         }
     }

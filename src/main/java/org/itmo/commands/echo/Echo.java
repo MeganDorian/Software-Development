@@ -26,7 +26,7 @@ public class Echo implements Command {
     @Override
     public void execute() {
         if (output.isEmpty()) {
-            CommandResultSaver.saveCommandResult("", false);
+            CommandResultSaver.saveCommandResult("\n", false);
         } else {
             output.forEach(s -> CommandResultSaver.saveCommandResult(
                     s + (!Objects.equals(s, output.get(output.size() - 1)) ? " " : ""),

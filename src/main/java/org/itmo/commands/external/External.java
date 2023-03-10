@@ -41,8 +41,8 @@ public class External implements Command {
                 builder.command("sh", "-c", name + " " + paramWithFlags);
             }
             Process process = builder.start();
-            BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
-            BufferedReader readerError = new BufferedReader(new InputStreamReader(process.getErrorStream()));
+            BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream(), "UTF-8"));
+            BufferedReader readerError = new BufferedReader(new InputStreamReader(process.getErrorStream(), "UTF-8"));
             String line;
             if (process.waitFor() != 0) {
                 StringBuilder error = new StringBuilder();

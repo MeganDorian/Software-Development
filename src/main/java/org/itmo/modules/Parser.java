@@ -279,11 +279,7 @@ public class Parser {
         matcherVariableAddition = patternVariableAddition.matcher(line);
         if (matcherVariableAddition.find()) {
             int indexEq = line.indexOf("=");
-            int indexSp = line.indexOf(" ");
-            if (indexSp == -1) {
-                indexSp = line.length();
-            }
-            localStorage.set(line.substring(0, indexEq), line.substring(indexEq + 1, indexSp));
+            localStorage.set(line.substring(0, indexEq), line.substring(indexEq + 1));
         } else {
             int index = line.indexOf(" ");
             if (index == -1) {

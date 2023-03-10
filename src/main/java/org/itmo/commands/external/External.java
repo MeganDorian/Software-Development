@@ -44,15 +44,16 @@ public class External implements Command {
             BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream(), "UTF-8"));
             BufferedReader readerError = new BufferedReader(new InputStreamReader(process.getErrorStream(), "UTF-8"));
             String line;
-            if (process.waitFor() != 0) {
+            process.waitFor();
+            while ((line = reader.readLine()) != null) {
+                CommandResultSaver.saveCommandResult(line, true);
+            }
+            if (process.exitValue() != 0) {
                 StringBuilder error = new StringBuilder();
                 while ((line = readerError.readLine()) != null) {
                     error.append(line + "\n");
                 }
                 throw new ExternalException(error.toString());
-            }
-            while ((line = reader.readLine()) != null) {
-                CommandResultSaver.saveCommandResult(line, true);
             }
         } catch (Exception ex) {
             throw new ExternalException(ex.getMessage());

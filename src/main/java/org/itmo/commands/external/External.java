@@ -8,6 +8,7 @@ import org.itmo.utils.CommandResultSaver;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
 import java.util.List;
 
 public class External implements Command {
@@ -32,19 +33,24 @@ public class External implements Command {
     public void execute() throws ExternalException {
         try {
             ProcessBuilder builder = new ProcessBuilder();
+            StringBuilder paramWithFlags = new StringBuilder(String.join(" ", params));
             if (isWindows) {
-                builder.command("cmd.exe", "/c", name + params.toString());
+                builder.command("cmd.exe", "/c", name + " " + paramWithFlags);
             }
             else {
-                builder.command("sh", "-c", name + params.toString());
+                builder.command("sh", "-c", name + " " + paramWithFlags);
             }
-            builder.directory(new File(System.getProperty("user.home")));
             Process process = builder.start();
-            if (process.waitFor() != 0) {
-                throw new ExternalException("Command not found");
-            }
             BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+            BufferedReader readerError = new BufferedReader(new InputStreamReader(process.getErrorStream()));
             String line;
+            if (process.waitFor() != 0) {
+                StringBuilder error = new StringBuilder();
+                while ((line = readerError.readLine()) != null) {
+                    error.append(line + "\n");
+                }
+                throw new ExternalException(error.toString());
+            }
             while ((line = reader.readLine()) != null) {
                 CommandResultSaver.saveCommandResult(line, true);
             }

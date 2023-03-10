@@ -12,7 +12,7 @@ import java.util.Optional;
  * PWD command to print current directory
  */
 public class Pwd implements Command {
-    private List<PwdFlags> flags;
+    private final List<PwdFlags> flags;
     
     public Pwd(CommandInfo commandInfo) {
         flags = new ArrayList<>();

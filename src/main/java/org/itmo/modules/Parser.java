@@ -31,7 +31,7 @@ public class Parser {
         patternSingleQuotes = Pattern.compile("'[^']*'");
         patternDoubleQuotes = Pattern.compile("\"[^\"]*\"");
         patternVariables = Pattern.compile("\\$[^$ ]+ *");
-        patternVariableAddition = Pattern.compile("^[^= ]*=[^ ]*");
+        patternVariableAddition = Pattern.compile("^[^= ]+=[^ ]*");
         patternFlag = Pattern.compile("-{1,2}[^- ]+ *");
     }
     

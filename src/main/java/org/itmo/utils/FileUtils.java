@@ -89,8 +89,4 @@ public class FileUtils {
         }
     }
     
-    public String getCurrentPath() {
-        return System.getProperty("user.dir");
-    }
-    
 }

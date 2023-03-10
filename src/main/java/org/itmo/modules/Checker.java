@@ -58,9 +58,10 @@ public class Checker {
                         break;
                     }
                 }
-            } catch (IllegalArgumentException ignored) {
-            
-            } catch (Exception exception) {
+            } catch (FlagNotFoundException exception) {
+                throw new FlagNotFoundException(exception);
+            }
+            catch (Exception exception) {
                 throw new CheckerException(exception);
             }
         }

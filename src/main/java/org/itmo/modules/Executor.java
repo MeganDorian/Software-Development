@@ -66,7 +66,7 @@ public class Executor {
                     }
                 }
             } catch (CatFileNotFoundException | WcFileNotFoundException | ExternalException e) {
-                System.out.println(e.getMessage());
+                System.err.println(e.getMessage());
             } catch (Exception e) {
                 e.printStackTrace();
                 return false;

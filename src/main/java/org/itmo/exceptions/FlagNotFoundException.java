@@ -10,4 +10,12 @@ public class FlagNotFoundException extends Exception {
     public FlagNotFoundException(String message) {
         super(message);
     }
+    
+    /**
+     *
+     * @param exception information on the exemption that has occurred
+     */
+    public FlagNotFoundException(Exception exception) {
+        super(exception);
+    }
 }

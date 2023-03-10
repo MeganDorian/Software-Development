@@ -58,7 +58,12 @@ public class Checker {
                         break;
                     }
                 }
-            } catch (FlagNotFoundException exception) {
+            }
+            catch (IllegalArgumentException ignored) {
+                //if it is an external command
+            }
+            catch (FlagNotFoundException exception) {
+                //if the flag for the embedded command is incorrect
                 throw new FlagNotFoundException(exception);
             }
             catch (Exception exception) {

@@ -30,23 +30,17 @@ public class External implements Command {
      */
     @Override
     public void execute() throws ExternalException {
-        try
-        {
-    
-    
+        try {
             ProcessBuilder builder = new ProcessBuilder();
-            if (isWindows)
-            {
+            if (isWindows) {
                 builder.command("cmd.exe", "/c", name + params.toString());
             }
-            else
-            {
+            else {
                 builder.command("sh", "-c", name + params.toString());
             }
             builder.directory(new File(System.getProperty("user.home")));
             Process process = builder.start();
-            if (process.waitFor() != 0)
-            {
+            if (process.waitFor() != 0) {
                 throw new ExternalException("Command not found");
             }
             BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
@@ -60,8 +54,7 @@ public class External implements Command {
     }
     
     @Override
-    public boolean printHelp ()
-    {
+    public boolean printHelp () {
         return false;
     }
     

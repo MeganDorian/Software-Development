@@ -36,7 +36,7 @@ public class Parser {
     }
     
     /**
-     * Removes unnecessary inverted commas and substitutes variables
+     * Removes unnecessary inverted commas and substitutes variables<p>
      * If no variable is found, substitutes an empty string
      *
      * @param line -- processing string
@@ -258,9 +258,7 @@ public class Parser {
             // add a line before the variable
             result.append(line, index, matcherVariables.start());
             localStorage.get(line.substring(matcherVariables.start() + 1,
-                    matcherVariables.end())).ifPresentOrElse(
-                    result::append,
-                    () -> result.append(""));
+                                            matcherVariables.end())).ifPresent(result::append);
             index = matcherVariables.end();
         }
         if (line.length() - index > 0) {

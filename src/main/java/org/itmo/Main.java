@@ -1,5 +1,6 @@
 package org.itmo;
 
+import org.itmo.exceptions.CheckerException;
 import org.itmo.exceptions.FlagNotFoundException;
 import org.itmo.modules.Checker;
 import org.itmo.modules.Executor;
@@ -24,7 +25,7 @@ public class Main {
             try
             {
                 checker.checkCommand(allCommands);
-            } catch (FlagNotFoundException e)
+            } catch (FlagNotFoundException | CheckerException e)
             {
                 e.printStackTrace();
                 allCommands.clear();

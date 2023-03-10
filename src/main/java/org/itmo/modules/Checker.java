@@ -4,6 +4,7 @@ import org.itmo.commands.Commands;
 import org.itmo.commands.cat.CatFlags;
 import org.itmo.commands.pwd.PwdFlags;
 import org.itmo.commands.wc.WcFlags;
+import org.itmo.exceptions.CheckerException;
 import org.itmo.exceptions.FlagNotFoundException;
 import org.itmo.utils.CommandInfo;
 
@@ -20,7 +21,8 @@ public class Checker {
      * @param command - information about command
      * @return true if the command is valid, false otherwise
      */
-    public boolean checkCommand(List<CommandInfo> command) throws FlagNotFoundException {
+    public boolean checkCommand(List<CommandInfo> command) throws FlagNotFoundException, CheckerException
+    {
         for (CommandInfo com : command) {
             try {
                 Commands.valueOf(com.getCommandName());
@@ -55,6 +57,8 @@ public class Checker {
                 }
             } catch (IllegalArgumentException ignored) {
             
+            } catch (Exception exception) {
+                throw new CheckerException(exception);
             }
         }
         return true;

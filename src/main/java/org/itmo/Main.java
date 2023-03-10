@@ -8,6 +8,7 @@ import org.itmo.modules.Parser;
 import org.itmo.modules.Reader;
 import org.itmo.utils.CommandInfo;
 import org.itmo.utils.CommandResultSaver;
+import org.itmo.utils.FileUtils;
 
 import java.util.List;
 
@@ -20,6 +21,7 @@ public class Main {
         List<CommandInfo> allCommands;
         do
         {
+            System.out.print(FileUtils.getCurrentPath() + "> ");
             String command = reader.readInput();
             allCommands = parser.commandParser(parser.substitutor(command).toString());
             try

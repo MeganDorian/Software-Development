@@ -32,7 +32,7 @@ public class Checker {
                             if (!CatFlags.isBelongs(com.getFlags().get(i))) {
                                 throw new FlagNotFoundException("cat: unrecognized option '"
                                         + com.getFlags().get(i)
-                                        + "'\nTry 'cat -h' for more information.");
+                                        + "'\nTry 'cat --help' for more information.");
                             }
                         }
                         break;
@@ -42,7 +42,7 @@ public class Checker {
                             if (!PwdFlags.isBelongs(com.getFlags().get(i))) {
                                 throw new FlagNotFoundException("pwd: unrecognized option '"
                                         + com.getFlags().get(i)
-                                        + "'\nTry 'pwd -h' for more information.");
+                                        + "'\nTry 'pwd --help' for more information.");
                             }
                         }
                         break;
@@ -52,7 +52,7 @@ public class Checker {
                             if (!WcFlags.isBelongs(com.getFlags().get(i))) {
                                 throw new FlagNotFoundException("wc: unrecognized option '"
                                         + com.getFlags().get(i)
-                                        + "'\nTry 'wc -h' for more information.");
+                                        + "'\nTry 'wc --help' for more information.");
                             }
                         }
                         break;

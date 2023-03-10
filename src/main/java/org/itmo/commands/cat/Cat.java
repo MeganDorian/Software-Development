@@ -23,9 +23,7 @@ public class Cat implements Command {
     
     public Cat(CommandInfo commandInfo) {
         flags = new ArrayList<>();
-        commandInfo.getFlags().forEach(flag -> {
-            flags.add(CatFlags.valueOf(flag.replaceAll("^-{1,2}", "").toUpperCase()));
-        });
+        commandInfo.getFlags().forEach(flag -> flags.add(CatFlags.valueOf(flag.replaceAll("^-{1,2}", "").toUpperCase())));
         params = commandInfo.getParams();
     }
     
@@ -40,7 +38,7 @@ public class Cat implements Command {
         if (!printHelp()) {
             
             StringBuilder line = new StringBuilder();
-            boolean addNumber = flags.contains(CatFlags.E);
+            boolean addNumber = flags.contains(CatFlags.N);
             boolean addDollarSymbol = flags.contains(CatFlags.E);
             int lineNumber = 1;
             

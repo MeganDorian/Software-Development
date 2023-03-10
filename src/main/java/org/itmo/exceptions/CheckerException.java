@@ -6,15 +6,6 @@ package org.itmo.exceptions;
 public class CheckerException extends Exception {
     
     /**
-     *
-     * @param message essage with additional info about exception
-     */
-    public CheckerException(String message) {
-        super(message);
-    }
-    
-    /**
-     *
      * @param exception information on the exemption that has occurred
      */
     public CheckerException(Exception exception) {

@@ -29,7 +29,7 @@ public class Main {
                 checker.checkCommand(allCommands);
             } catch (FlagNotFoundException | CheckerException e)
             {
-                System.out.println(e.getMessage());
+                System.out.println(e.getCause().getMessage());
                 allCommands.clear();
             }
         } while (executor.run(allCommands));

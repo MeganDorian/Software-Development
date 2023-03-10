@@ -35,6 +35,7 @@ public class Checker {
                                         + "'\nTry 'cat -h' for more information.");
                             }
                         }
+                        break;
                     }
                     case "pwd": {
                         for (int i = 0; i < com.getFlags().size(); i++) {
@@ -44,6 +45,7 @@ public class Checker {
                                         + "'\nTry 'pwd -h' for more information.");
                             }
                         }
+                        break;
                     }
                     case "wc": {
                         for (int i = 0; i < com.getFlags().size(); i++) {
@@ -53,6 +55,7 @@ public class Checker {
                                         + "'\nTry 'wc -h' for more information.");
                             }
                         }
+                        break;
                     }
                 }
             } catch (IllegalArgumentException ignored) {

@@ -36,10 +36,12 @@ public class Executor {
                         case "cat": {
                             Cat cat = new Cat(command);
                             cat.execute();
+                            break;
                         }
                         case "echo": {
                             Echo echo = new Echo(command);
                             echo.execute();
+                            break;
                         }
                         case "exit": {
                             Exit exit = new Exit();
@@ -49,14 +51,17 @@ public class Executor {
                         case "pwd": {
                             Pwd pwd = new Pwd(command);
                             pwd.execute();
+                            break;
                         }
                         case "wc": {
                             Wc wc = new Wc(command);
                             wc.execute();
+                            break;
                         }
                         default: {
                             External external = new External(command);
                             external.execute();
+                            break;
                         }
                     }
                 }

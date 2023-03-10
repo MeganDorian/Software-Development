@@ -72,4 +72,21 @@ public class Checker {
         }
         return true;
     }
+    
+    /**
+     * Checks whether the command is internal
+     *
+     * @param commandName -- command name to check
+     * @return <true> -- if the command is internal, <false> -- if the command is external
+     */
+    public static boolean checkCommandIsInternal(String commandName) {
+        try {
+            Commands.valueOf(commandName);
+            return true;
+        } catch (IllegalArgumentException ignored) {
+            //if it is an external command
+            return false;
+        }
+    }
+    
 }

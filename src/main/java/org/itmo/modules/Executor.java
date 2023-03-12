@@ -29,6 +29,11 @@ public class Executor {
     }
     
     public boolean run(List<CommandInfo> allCommands) {
+        try {
+            CommandResultSaver.clearCommandResult();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
         if (!allCommands.isEmpty()) {
             try {
                 for (CommandInfo command : allCommands) {
@@ -77,11 +82,6 @@ public class Executor {
                 System.out.println(line.get());
                 line = FileUtils.loadLineFromFile(fInfo);
             }
-        }
-        try {
-            CommandResultSaver.clearCommandResult();
-        } catch (IOException e) {
-            throw new RuntimeException(e);
         }
         return true;
     }

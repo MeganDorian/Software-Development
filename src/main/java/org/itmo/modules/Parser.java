@@ -14,19 +14,21 @@ public class Parser {
     
     private final LocalStorage localStorage;
     
-    private final Pattern patternSingleQuotes;
-    private final Pattern patternDoubleQuotes;
-    private final Pattern patternVariables;
-    private final Pattern patternVariableAddition;
-    private final Pattern patternFlag;
+    private final Pattern singleQuotes;
+    private final Pattern doubleQuotes;
+    private final Pattern backslashesAtTheEnd;
+    private final Pattern variables;
+    private final Pattern variableAddition;
+    private final Pattern flag;
     
     public Parser() {
         localStorage = new LocalStorage();
-        patternSingleQuotes = Pattern.compile("'[^']*'");
-        patternDoubleQuotes = Pattern.compile("\"[^\"]*\"");
-        patternVariables = Pattern.compile("\\$[^$ ]+ *");
-        patternVariableAddition = Pattern.compile("^[^= ]+=[^ ]*");
-        patternFlag = Pattern.compile("-{1,2}[^- ]+ *");
+        singleQuotes = Pattern.compile("'[^']*'");
+        doubleQuotes = Pattern.compile("\"[^\"]*\"");
+        backslashesAtTheEnd = Pattern.compile("[^\\\\]*\\\\*$");
+        variables = Pattern.compile("\\$[^$ ]+ *");
+        variableAddition = Pattern.compile("^[^= ]+=[^ ]*");
+        flag = Pattern.compile("-{1,2}[^- ]+ *");
     }
     
     /**
@@ -70,8 +72,8 @@ public class Parser {
     public StringBuilder substitutor(String line) {
         line = line.trim();
         StringBuilder result = new StringBuilder();
-        Matcher matcherSingleQuotes = patternSingleQuotes.matcher(line);
-        Matcher matcherDoubleQuotes = patternDoubleQuotes.matcher(line);
+        Matcher matcherSingleQuotes = singleQuotes.matcher(line);
+        Matcher matcherDoubleQuotes = doubleQuotes.matcher(line);
         int startIndexSubstring = 0;
         int startOfSingleQuotes = -1, endOfSingleQuotes = -1;
         int startOfDoubleQuotes = -1, endOfDoubleQuotes = -1;
@@ -218,6 +220,8 @@ public class Parser {
             result.append(substitution);
             startIndexSubstring = nextStartIndexSubstring;
         }
+        String res = result.toString().replaceAll("\\\\", "");
+        result = new StringBuilder(res);
         return result;
     }
     
@@ -231,17 +235,25 @@ public class Parser {
     private StringBuilder substitutionVariables(String line) {
         StringBuilder result = new StringBuilder();
         int index = 0;
-        Matcher matcherVariables = patternVariables.matcher(line);
+        Matcher matcherVariables = variables.matcher(line);
         while (matcherVariables.find()) {
-            // add a line before the variable
-            result.append(line, index, matcherVariables.start());
-            String subline = line.substring(matcherVariables.start() + 1, matcherVariables.end());
-            int indexSpace = subline.indexOf(' ');
-            localStorage.get(subline.replaceAll(" +", "")).ifPresent(result::append);
-            if (indexSpace != -1) {
-                result.append(' ');
+            String beforeDollarSymbol = line.substring(index, matcherVariables.start());
+            int countOfBackslashes = 0;
+            while (beforeDollarSymbol.lastIndexOf("\\") != -1) {
+                countOfBackslashes++;
+                beforeDollarSymbol = beforeDollarSymbol.substring(0, beforeDollarSymbol.lastIndexOf("\\"));
             }
-            index = matcherVariables.end();
+            if (countOfBackslashes % 2 == 0) {
+                // add a line before the variable
+                result.append(line, index, matcherVariables.start());
+                String subline = line.substring(matcherVariables.start() + 1, matcherVariables.end());
+                int indexSpace = subline.indexOf(' ');
+                localStorage.get(subline.replaceAll(" +", "")).ifPresent(result::append);
+                if (indexSpace != -1) {
+                    result.append(' ');
+                }
+                index = matcherVariables.end();
+            }
         }
         if (line.length() - index > 0) {
             result.append(line, index, line.length());
@@ -260,7 +272,7 @@ public class Parser {
      */
     public List<CommandInfo> commandParser(String line) {
         List<CommandInfo> commands = new ArrayList<>();
-        Matcher matcherVariableAddition = patternVariableAddition.matcher(line);
+        Matcher matcherVariableAddition = variableAddition.matcher(line);
         if (matcherVariableAddition.find()) {
             int indexEq = line.indexOf("=");
             localStorage.set(line.substring(0, indexEq), line.substring(indexEq + 1));
@@ -274,7 +286,7 @@ public class Parser {
                 List<String> param = new ArrayList<>();
                 String newLine = line.substring(index + 1);
                 if (Checker.checkCommandIsInternal(name)) {
-                    Matcher matcherFlag = patternFlag.matcher(newLine);
+                    Matcher matcherFlag = flag.matcher(newLine);
                     index = 0;
                     while (matcherFlag.find()) {
                         if (matcherFlag.start() - index > 0) {

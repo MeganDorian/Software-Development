@@ -40,6 +40,9 @@ public class ParserTests {
     public void addVariable() {
         parser.commandParser("x=y");
         assertEquals("echo y", parser.substitutor("echo $x").toString());
+        assertEquals("echo y", parser.substitutor("echo \\\\$x").toString());
+        assertEquals("echo y $x", parser.substitutor("echo \\\\$x \\$x").toString());
+        assertEquals("echo $x", parser.substitutor("echo \\$x").toString());
     }
     
     @ParameterizedTest

@@ -25,8 +25,49 @@ public class Parser {
         singleQuotes = Pattern.compile("'[^']*'");
         doubleQuotes = Pattern.compile("\"[^\"]*\"");
         variables = Pattern.compile("\\$+[^$ ]+ *");
-        variableAddition = Pattern.compile("^[^= ]+=[^ ]*");
+        variableAddition = Pattern.compile("^[^ ]+=[^ ]*");
         flag = Pattern.compile("-{1,2}[^- ]+ *");
+    }
+    
+    /**
+     * Checks if the substring has odd or even count of backslashes at the end. <br>
+     * Used to check if the symbol which follows after end of substring in the whole string is escaped or not
+     *
+     * @param substring substring to check
+     * @return true if next symbol in the whole string is escaped  <br>
+     * false otherwise
+     */
+    private boolean isEscaped(String substring) {
+        return getCountOfBackslashesAtTheEnd(substring) % 2 != 0;
+    }
+    
+    /**
+     * Counts the number of \ occurrences at the end of the string
+     *
+     * @param line string to check
+     * @return number of \ occurrences
+     */
+    private int getCountOfBackslashesAtTheEnd(String line) {
+        int countOfBackslashes = 0;
+        while (line.lastIndexOf("\\") != -1) {
+            countOfBackslashes++;
+            line = line.substring(0, line.lastIndexOf("\\"));
+        }
+        return countOfBackslashes;
+    }
+    
+    /**
+     * Replaces all paired backslashes with the single ones e.g. \\ will be replaces with \
+     *
+     * @param substring string in which need to do replace
+     * @return string with all paired backslashes
+     */
+    private String replaceEvenCountOfBackslashesWithSingles(String substring) {
+        int backslashesCount = getCountOfBackslashesAtTheEnd(substring);
+        while (substring.endsWith("\\")) {
+            substring = substring.substring(0, substring.lastIndexOf("\\"));
+        }
+        return substring + "\\".repeat(backslashesCount / 2);
     }
     
     /**
@@ -48,21 +89,20 @@ public class Parser {
     
     /**
      * Removes unnecessary quotes and substitutes variables<p>
-     * If no variable is found, substitutes an empty string
-     * <p>
-     * While not end of string reached do:
-     * 1. searches is there any single quotes in the substring
-     * 2. searches is there any double quotes in the substring
-     * 3. checks different situations if found two types of quotes:
-     * a) " ' ' "
-     * b) ' " " '
-     * c) ' " ' "
-     * d) " ' " '
-     * e) " " ' '
-     * f) ' ' " "
-     * 4. checks different situations if found only one type of quotes:
-     * a) if found only " "
-     * b) if found only ' '
+     * If no variable is found, substitutes an empty string <br>
+     * While not end of string reached do:<br>
+     * 1. searches is there any single quotes in the substring <br>
+     * 2. searches is there any double quotes in the substring <br>
+     * 3. checks different situations if found two types of quotes:  <br>
+     * a) " ' ' " <br>
+     * b) ' " " ' <br>
+     * c) ' " ' " <br>
+     * d) " ' " ' <br>
+     * e) " " ' ' <br>
+     * f) ' ' " " <br>
+     * 4. checks different situations if found only one type of quotes: <br>
+     * a) if found only " " <br>
+     * b) if found only ' ' <br>
      *
      * @param line -- processing string
      * @return substitution string
@@ -218,8 +258,6 @@ public class Parser {
             result.append(substitution);
             startIndexSubstring = nextStartIndexSubstring;
         }
-        String res = result.toString().replaceAll("\\\\", "");
-        result = new StringBuilder(res);
         return result;
     }
     
@@ -235,15 +273,10 @@ public class Parser {
         int index = 0;
         Matcher matcherVariables = variables.matcher(line);
         while (matcherVariables.find()) {
-            String beforeDollarSymbol = line.substring(index, matcherVariables.start());
-            int countOfBackslashes = 0;
-            while (beforeDollarSymbol.lastIndexOf("\\") != -1) {
-                countOfBackslashes++;
-                beforeDollarSymbol = beforeDollarSymbol.substring(0, beforeDollarSymbol.lastIndexOf("\\"));
-            }
-            if (countOfBackslashes % 2 == 0) {
+            String beforeDollar = line.substring(index, matcherVariables.start());
+            if (!isEscaped(beforeDollar)) {
                 // add a line before the variable
-                result.append(line, index, matcherVariables.start());
+                result.append(replaceEvenCountOfBackslashesWithSingles(beforeDollar));
                 String subline = line.substring(matcherVariables.start(), matcherVariables.end());
                 while (subline.startsWith("$$")) {
                     result.append("$$");
@@ -260,6 +293,10 @@ public class Parser {
                 } else {
                     index = line.length() - subline.length();
                 }
+            } else {
+                result.append(replaceEvenCountOfBackslashesWithSingles(beforeDollar));
+                result.append(line, matcherVariables.start(), matcherVariables.end());
+                index = matcherVariables.end();
             }
         }
         if (line.length() - index > 0) {

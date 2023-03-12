@@ -36,6 +36,23 @@ public class Parser {
     }
     
     /**
+     * Handling a substring before/between/after inverted quotes
+     *
+     * @param startIndex -- start index of line processing
+     * @param endIndex -- end index of line processing
+     * @param line -- processing string
+     * @return processed string
+     */
+    private StringBuilder substringProcessingWithoutQuotes(int startIndex, int endIndex, String line) {
+        StringBuilder result = new StringBuilder();
+        if(endIndex - startIndex > 0) {
+            //тут перед подстановкой можно добавить обработку на пайпы
+            substitutionVariables(line.substring(startIndex, endIndex));
+        }
+        return result;
+    }
+    
+    /**
      * Removes unnecessary inverted commas and substitutes variables<p>
      * If no variable is found, substitutes an empty string
      *
@@ -83,9 +100,7 @@ public class Parser {
                         && endIndexPatternDoubleQuotes > endIndexPatternSingleQuotes) {
                     // if there is an unprocessed string between the current pattern found and the previous one
                     // we give it to substitute variables
-                    if (startIndexPatternDoubleQuotes - startIndexSubstring > 0) {
-                        result.append(substitutionVariables(line.substring(startIndexSubstring, startIndexPatternDoubleQuotes)));
-                    }
+                    result.append(substringProcessingWithoutQuotes(startIndexSubstring, startIndexPatternDoubleQuotes, line));
                     // send everything inside the double quotes to substitute variables
                     // the double quotes themselves will be deleted
                     if (endIndexPatternDoubleQuotes - startIndexPatternDoubleQuotes > 0) {
@@ -103,10 +118,7 @@ public class Parser {
                         && endIndexPatternSingleQuotes > endIndexPatternDoubleQuotes) {
                     // if there is an unprocessed string between the current pattern found and the previous one
                     // we give it to substitute variables
-                    if (startIndexPatternSingleQuotes - startIndexSubstring > 0) {
-                        result.append(substitutionVariables(
-                                line.substring(startIndexSubstring, startIndexPatternSingleQuotes)));
-                    }
+                    result.append(substringProcessingWithoutQuotes(startIndexSubstring, startIndexPatternSingleQuotes, line));
                     // add a line in single quotes, the quotes themselves will be cut out
                     if (endIndexPatternSingleQuotes - startIndexPatternSingleQuotes > 0) {
                         result.append(line, startIndexPatternSingleQuotes + 1, endIndexPatternSingleQuotes - 1);
@@ -124,10 +136,7 @@ public class Parser {
                             && endIndexPatternSingleQuotes < endIndexPatternDoubleQuotes) {
                         // if there is an unprocessed string between the current pattern found and the previous one
                         // we give it to substitute variables
-                        if (startIndexPatternSingleQuotes - startIndexSubstring > 0) {
-                            result.append(substitutionVariables(
-                                    line.substring(startIndexSubstring, startIndexPatternSingleQuotes)));
-                        }
+                        result.append(substringProcessingWithoutQuotes(startIndexSubstring, startIndexPatternSingleQuotes, line));
                         // add a line in single quotes, the quotes themselves will be cut out
                         if (endIndexPatternSingleQuotes - startIndexPatternSingleQuotes > 0) {
                             result.append(line, startIndexPatternSingleQuotes + 1, endIndexPatternSingleQuotes - 1);
@@ -143,9 +152,7 @@ public class Parser {
                             && endIndexPatternDoubleQuotes < endIndexPatternSingleQuotes) {
                         // if there is an unprocessed string between the current pattern found and the previous one
                         // we give it to substitute variables
-                        if (startIndexPatternDoubleQuotes - startIndexSubstring > 0) {
-                            result.append(substitutionVariables(line.substring(startIndexSubstring, startIndexPatternDoubleQuotes)));
-                        }
+                        result.append(substringProcessingWithoutQuotes(startIndexSubstring, startIndexPatternDoubleQuotes, line));
                         // send everything inside the double quotes to substitute variables
                         // the double quotes themselves will be deleted
                         if (endIndexPatternDoubleQuotes - startIndexPatternDoubleQuotes > 0) {
@@ -164,9 +171,7 @@ public class Parser {
                         if (startIndexPatternDoubleQuotes < startIndexPatternSingleQuotes) {
                             // if there is an unprocessed string between the current pattern found and the previous one
                             // we give it to substitute variables
-                            if (startIndexPatternDoubleQuotes - startIndexSubstring > 0) {
-                                result.append(substitutionVariables(line.substring(startIndexSubstring, startIndexPatternDoubleQuotes)));
-                            }
+                            result.append(substringProcessingWithoutQuotes(startIndexSubstring, startIndexPatternDoubleQuotes, line));
                             // send everything inside the double quotes to substitute variables
                             // the double quotes themselves will be deleted
                             if (endIndexPatternDoubleQuotes - startIndexPatternDoubleQuotes > 0) {
@@ -181,10 +186,7 @@ public class Parser {
                         else {
                             // if there is an unprocessed string between the current pattern found and the previous one
                             // we give it to substitute variables
-                            if (startIndexPatternSingleQuotes - startIndexSubstring > 0) {
-                                result.append(substitutionVariables(
-                                        line.substring(startIndexSubstring, startIndexPatternSingleQuotes)));
-                            }
+                            result.append(substringProcessingWithoutQuotes(startIndexSubstring, startIndexPatternSingleQuotes, line));
                             // add a line in single quotes, the quotes themselves will be cut out
                             if (endIndexPatternSingleQuotes - startIndexPatternSingleQuotes > 0) {
                                 result.append(line, startIndexPatternSingleQuotes + 1, endIndexPatternSingleQuotes - 1);
@@ -201,9 +203,7 @@ public class Parser {
                 if (flD) {
                     // if there is an unprocessed string between the current pattern found and the previous one
                     // we give it to substitute variables
-                    if (startIndexPatternDoubleQuotes - startIndexSubstring > 0) {
-                        result.append(substitutionVariables(line.substring(startIndexSubstring, startIndexPatternDoubleQuotes)));
-                    }
+                    result.append(substringProcessingWithoutQuotes(startIndexSubstring, startIndexPatternDoubleQuotes, line));
                     // send everything inside the double quotes to substitute variables
                     // the double quotes themselves will be deleted
                     if (endIndexPatternDoubleQuotes - startIndexPatternDoubleQuotes > 0) {
@@ -216,10 +216,7 @@ public class Parser {
                 } else {
                     // if there is an unprocessed string between the current pattern found and the previous one
                     // we give it to substitute variables
-                    if (startIndexPatternSingleQuotes - startIndexSubstring > 0) {
-                        result.append(substitutionVariables(
-                                line.substring(startIndexSubstring, startIndexPatternSingleQuotes)));
-                    }
+                    result.append(substringProcessingWithoutQuotes(startIndexSubstring, startIndexPatternSingleQuotes, line));
                     // add a line in single quotes, the quotes themselves will be cut out
                     if (endIndexPatternSingleQuotes - startIndexPatternSingleQuotes > 0) {
                         result.append(line, startIndexPatternSingleQuotes + 1, endIndexPatternSingleQuotes - 1);
@@ -233,10 +230,7 @@ public class Parser {
             else {
                 // if there is an unprocessed string between the last pattern found
                 // we give it to substitute variables
-                if (line.length() - startIndexSubstring > 0) {
-                    result.append(substitutionVariables(
-                            line.substring(startIndexSubstring)));
-                }
+                result.append(substringProcessingWithoutQuotes(startIndexSubstring, line.length(), line));
                 startIndexSubstring = line.length();
             }
         }

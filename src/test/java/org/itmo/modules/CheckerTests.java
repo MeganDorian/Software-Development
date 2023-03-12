@@ -1,6 +1,5 @@
 package org.itmo.modules;
 
-import org.itmo.exceptions.CheckerException;
 import org.itmo.exceptions.FlagNotFoundException;
 import org.itmo.utils.CommandInfo;
 import org.junit.jupiter.api.Test;
@@ -20,37 +19,20 @@ public class CheckerTests {
     
     @Test
     public void externalCommandTest() {
-        try {
-            checker.checkCommand(
-                    List.of(new CommandInfo("someCommand", new ArrayList<>(), new ArrayList<>())));
-        } catch (FlagNotFoundException | CheckerException e) {
-            fail("Unexpected error");
-        }
+        assertDoesNotThrow(() -> checker.checkCommand(
+                    List.of(new CommandInfo("someCommand", new ArrayList<>(), new ArrayList<>()))));
     }
     
     @ParameterizedTest
     @MethodSource("forCheckForNotExistsFlagsAllCommands")
     public void checkForNotExistsFlagsAllCommands(List<CommandInfo> commands, String error) {
-        try {
-            checker.checkCommand(commands);
-        } catch (IllegalArgumentException | CheckerException exception) {
-            fail("Unexpected error");
-        } catch (FlagNotFoundException exception) {
-            assertEquals(error, exception.getCause().getMessage());
-            return;
-        }
-        fail("No exception");
+        assertThrows(FlagNotFoundException.class, () -> checker.checkCommand(commands));
     }
     
     @ParameterizedTest
     @MethodSource("forCheckInternalCommandsWithoutFlags")
     public void checkInternalCommandsWithoutFlags(List<CommandInfo> commands) {
-        try
-        {
-           checker.checkCommand(commands);
-        } catch (FlagNotFoundException | CheckerException | IllegalArgumentException exception) {
-            fail("Unexpected error");
-        }
+        assertDoesNotThrow(() -> checker.checkCommand(commands));
     }
     
     @ParameterizedTest

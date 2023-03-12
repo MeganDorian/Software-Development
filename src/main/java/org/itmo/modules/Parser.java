@@ -12,234 +12,214 @@ import java.util.regex.Pattern;
  */
 public class Parser {
     
-    LocalStorage localStorage;
+    private final LocalStorage localStorage;
     
-    Pattern patternSingleQuotes;
-    Pattern patternDoubleQuotes;
-    Pattern patternVariables;
-    Pattern patternVariableAddition;
-    Pattern patternFlag;
-    
-    Matcher matcherSingleQuotes;
-    Matcher matcherDoubleQuotes;
-    Matcher matcherVariables;
-    Matcher matcherVariableAddition;
-    Matcher matcherFlag;
+    private final Pattern singleQuotes;
+    private final Pattern doubleQuotes;
+    private final Pattern variables;
+    private final Pattern variableAddition;
+    private final Pattern flag;
     
     public Parser() {
         localStorage = new LocalStorage();
-        patternSingleQuotes = Pattern.compile("'[^']*'");
-        patternDoubleQuotes = Pattern.compile("\"[^\"]*\"");
-        patternVariables = Pattern.compile("\\$[^$ ]+ *");
-        patternVariableAddition = Pattern.compile("^[^= ]+=[^ ]*");
-        patternFlag = Pattern.compile("-{1,2}[^- ]+ *");
+        singleQuotes = Pattern.compile("'[^']*'");
+        doubleQuotes = Pattern.compile("\"[^\"]*\"");
+        variables = Pattern.compile("\\$+[^$ ]+ *");
+        variableAddition = Pattern.compile("^[^= ]+=[^ ]*");
+        flag = Pattern.compile("-{1,2}[^- ]+ *");
     }
     
     /**
-     * Removes unnecessary inverted commas and substitutes variables<p>
+     * Handling a substring before/between/after inverted quotes
+     *
+     * @param startIndex -- start index of line processing
+     * @param endIndex   -- end index of line processing
+     * @param line       -- processing string
+     * @return processed string
+     */
+    private StringBuilder substringProcessingWithoutQuotes(int startIndex, int endIndex, String line) {
+        StringBuilder result = new StringBuilder();
+        if (endIndex - startIndex > 0) {
+            //тут перед подстановкой можно добавить обработку на пайпы
+            result = substitutionVariables(line.substring(startIndex, endIndex).replaceAll(" +", " "));
+        }
+        return result;
+    }
+    
+    /**
+     * Removes unnecessary quotes and substitutes variables<p>
      * If no variable is found, substitutes an empty string
+     * <p>
+     * While not end of string reached do:
+     * 1. searches is there any single quotes in the substring
+     * 2. searches is there any double quotes in the substring
+     * 3. checks different situations if found two types of quotes:
+     * a) " ' ' "
+     * b) ' " " '
+     * c) ' " ' "
+     * d) " ' " '
+     * e) " " ' '
+     * f) ' ' " "
+     * 4. checks different situations if found only one type of quotes:
+     * a) if found only " "
+     * b) if found only ' '
      *
      * @param line -- processing string
      * @return substitution string
      */
     public StringBuilder substitutor(String line) {
+        line = line.trim();
         StringBuilder result = new StringBuilder();
-        matcherSingleQuotes = patternSingleQuotes.matcher(line);
-        matcherDoubleQuotes = patternDoubleQuotes.matcher(line);
+        Matcher matcherSingleQuotes = singleQuotes.matcher(line);
+        Matcher matcherDoubleQuotes = doubleQuotes.matcher(line);
         int startIndexSubstring = 0;
-        int startIndexPatternSingleQuotes = -1, endIndexPatternSingleQuotes = -1;
-        int startIndexPatternDoubleQuotes = -1, endIndexPatternDoubleQuotes = -1;
+        int startOfSingleQuotes = -1, endOfSingleQuotes = -1;
+        int startOfDoubleQuotes = -1, endOfDoubleQuotes = -1;
+        int endOfWithoutQuotes;
+        int nextStartIndexSubstring;
         // marks whether to look for the next occurrence of the pattern
-        boolean flS = false, flD = false;
+        boolean foundSingle = false, foundDouble = false;
         while (startIndexSubstring != line.length()) {
+            String substitution = "";
             // if double quotes are to be searched for
-            if (!flD) {
-                flD = matcherDoubleQuotes.find(startIndexSubstring);
-                if (flD) {
-                    startIndexPatternDoubleQuotes = matcherDoubleQuotes.start();
-                    endIndexPatternDoubleQuotes = matcherDoubleQuotes.end();
-                } else {
-                    startIndexPatternDoubleQuotes = -1;
-                    endIndexPatternDoubleQuotes = -1;
-                }
+            if (!foundDouble) {
+                foundDouble = matcherDoubleQuotes.find(startIndexSubstring);
+                startOfDoubleQuotes = foundDouble ? matcherDoubleQuotes.start() : -1;
+                endOfDoubleQuotes = foundDouble ? matcherDoubleQuotes.end() : -1;
             }
             
             //if single quotes are to be searched for
-            if (!flS) {
-                flS = matcherSingleQuotes.find(startIndexSubstring);
-                if (flS) {
-                    startIndexPatternSingleQuotes = matcherSingleQuotes.start();
-                    endIndexPatternSingleQuotes = matcherSingleQuotes.end();
-                } else {
-                    startIndexPatternSingleQuotes = -1;
-                    endIndexPatternSingleQuotes = -1;
-                }
+            if (!foundSingle) {
+                foundSingle = matcherSingleQuotes.find(startIndexSubstring);
+                startOfSingleQuotes = foundSingle ? matcherSingleQuotes.start() : -1;
+                endOfSingleQuotes = foundSingle ? matcherSingleQuotes.end() : -1;
             }
             
             // both types of quotes are found
-            if (flD && flS) {
-                // if inverted commas are nested and double quotes are on the outside
-                if (startIndexPatternDoubleQuotes < startIndexPatternSingleQuotes
-                        && endIndexPatternDoubleQuotes > endIndexPatternSingleQuotes) {
-                    // if there is an unprocessed string between the current pattern found and the previous one
-                    // we give it to substitute variables
-                    if (startIndexPatternDoubleQuotes - startIndexSubstring > 0) {
-                        result.append(substitutionVariables(line.substring(startIndexSubstring, startIndexPatternDoubleQuotes)));
-                    }
+            if (foundDouble && foundSingle) {
+                // " ' ' " situation
+                if (startOfDoubleQuotes < startOfSingleQuotes
+                        && endOfDoubleQuotes > endOfSingleQuotes) {
+                    endOfWithoutQuotes = startOfDoubleQuotes;
                     // send everything inside the double quotes to substitute variables
                     // the double quotes themselves will be deleted
-                    if (endIndexPatternDoubleQuotes - startIndexPatternDoubleQuotes > 0) {
-                        result.append(substitutionVariables(
-                                line.substring(startIndexPatternDoubleQuotes + 1, endIndexPatternDoubleQuotes - 1)));
+                    if (endOfDoubleQuotes - startOfDoubleQuotes > 0) {
+                        substitution = String.valueOf(substitutionVariables(line.substring(startOfDoubleQuotes + 1, endOfDoubleQuotes - 1)));
                     }
-                    startIndexSubstring = endIndexPatternDoubleQuotes;
+                    nextStartIndexSubstring = endOfDoubleQuotes;
                     // discount all single quotes within double quotes
-                    flS = matcherSingleQuotes.find(endIndexPatternDoubleQuotes);
-                    // mark that the inverted commas have been processed
-                    flD = false;
+                    foundSingle = matcherSingleQuotes.find(endOfDoubleQuotes);
+                    // mark that the quotes have been processed
+                    foundDouble = false;
                 }
-                // if the inverted commas are nested inside each other and there are single quotes on the outside
-                else if (startIndexPatternSingleQuotes < startIndexPatternDoubleQuotes
-                        && endIndexPatternSingleQuotes > endIndexPatternDoubleQuotes) {
-                    // if there is an unprocessed string between the current pattern found and the previous one
-                    // we give it to substitute variables
-                    if (startIndexPatternSingleQuotes - startIndexSubstring > 0) {
-                        result.append(substitutionVariables(
-                                line.substring(startIndexSubstring, startIndexPatternSingleQuotes)));
+                // ' " " ' situation
+                else if (startOfSingleQuotes < startOfDoubleQuotes
+                        && endOfSingleQuotes > endOfDoubleQuotes) {
+                    endOfWithoutQuotes = startOfSingleQuotes;
+                    substitution = line.substring(startOfSingleQuotes + 1, endOfSingleQuotes - 1);
+                    if (endOfSingleQuotes - startOfSingleQuotes > 0) {
+                        substitution = line.substring(startOfSingleQuotes + 1, endOfSingleQuotes - 1);
                     }
-                    // add a line in single quotes, the quotes themselves will be cut out
-                    if (endIndexPatternSingleQuotes - startIndexPatternSingleQuotes > 0) {
-                        result.append(line, startIndexPatternSingleQuotes + 1, endIndexPatternSingleQuotes - 1);
-                    }
-                    startIndexSubstring = endIndexPatternSingleQuotes;
+                    nextStartIndexSubstring = endOfSingleQuotes;
                     // discount all double quotes inside single quotes
-                    flD = matcherDoubleQuotes.find(endIndexPatternSingleQuotes);
-                    // mark that the inverted commas have been processed
-                    flS = false;
+                    foundDouble = matcherDoubleQuotes.find(endOfSingleQuotes);
+                    // mark that the quotes have been processed
+                    foundSingle = false;
                 }
-                // the inverted commas are not nested within each other
+                // incorrect quotes, e.g. ' " ' "
                 else {
-                    // if the beginning of a double quote type within a single quote type
-                    if (startIndexPatternSingleQuotes < startIndexPatternDoubleQuotes
-                            && endIndexPatternSingleQuotes < endIndexPatternDoubleQuotes) {
-                        // if there is an unprocessed string between the current pattern found and the previous one
-                        // we give it to substitute variables
-                        if (startIndexPatternSingleQuotes - startIndexSubstring > 0) {
-                            result.append(substitutionVariables(
-                                    line.substring(startIndexSubstring, startIndexPatternSingleQuotes)));
+                    // ' " ' "  situation
+                    if (startOfSingleQuotes < startOfDoubleQuotes
+                            && endOfSingleQuotes < endOfDoubleQuotes) {
+                        endOfWithoutQuotes = startOfSingleQuotes;
+                        if (endOfSingleQuotes - startOfSingleQuotes > 0) {
+                            substitution = line.substring(startOfSingleQuotes + 1, endOfSingleQuotes - 1);
                         }
-                        // add a line in single quotes, the quotes themselves will be cut out
-                        if (endIndexPatternSingleQuotes - startIndexPatternSingleQuotes > 0) {
-                            result.append(line, startIndexPatternSingleQuotes + 1, endIndexPatternSingleQuotes - 1);
-                        }
-                        startIndexSubstring = endIndexPatternSingleQuotes;
+                        nextStartIndexSubstring = endOfSingleQuotes;
                         // discount all double quotes inside single quotes
-                        flD = matcherDoubleQuotes.find(endIndexPatternSingleQuotes);
-                        // mark that the inverted commas have been processed
-                        flS = false;
+                        foundDouble = matcherDoubleQuotes.find(endOfSingleQuotes);
+                        // mark that the quotes have been processed
+                        foundSingle = false;
                     }
-                    // if the beginning of a single-quote type within a double-quote type
-                    else if (startIndexPatternDoubleQuotes < startIndexPatternSingleQuotes
-                            && endIndexPatternDoubleQuotes < endIndexPatternSingleQuotes) {
-                        // if there is an unprocessed string between the current pattern found and the previous one
-                        // we give it to substitute variables
-                        if (startIndexPatternDoubleQuotes - startIndexSubstring > 0) {
-                            result.append(substitutionVariables(line.substring(startIndexSubstring, startIndexPatternDoubleQuotes)));
-                        }
+                    // " ' " '
+                    else if (startOfDoubleQuotes < startOfSingleQuotes
+                            && endOfDoubleQuotes < endOfSingleQuotes) {
+                        endOfWithoutQuotes = startOfDoubleQuotes;
                         // send everything inside the double quotes to substitute variables
                         // the double quotes themselves will be deleted
-                        if (endIndexPatternDoubleQuotes - startIndexPatternDoubleQuotes > 0) {
-                            result.append(substitutionVariables(
-                                    line.substring(startIndexPatternDoubleQuotes + 1, endIndexPatternDoubleQuotes - 1)));
+                        if (endOfDoubleQuotes - startOfDoubleQuotes > 0) {
+                            substitution = line.substring(startOfDoubleQuotes + 1, endOfDoubleQuotes - 1);
                         }
-                        startIndexSubstring = endIndexPatternDoubleQuotes;
+                        nextStartIndexSubstring = endOfDoubleQuotes;
                         // discount all single quotes within double quotes
-                        flS = matcherSingleQuotes.find(endIndexPatternDoubleQuotes);
-                        // mark that the inverted commas have been processed
-                        flD = false;
+                        foundSingle = matcherSingleQuotes.find(endOfDoubleQuotes);
+                        // mark that the quotes have been processed
+                        foundDouble = false;
                     }
-                    // the quotes do not overlap in any way, so we process the ones that come first
+                    // if quotes does not intersect
                     else {
-                        // if double quotes go before
-                        if (startIndexPatternDoubleQuotes < startIndexPatternSingleQuotes) {
-                            // if there is an unprocessed string between the current pattern found and the previous one
-                            // we give it to substitute variables
-                            if (startIndexPatternDoubleQuotes - startIndexSubstring > 0) {
-                                result.append(substitutionVariables(line.substring(startIndexSubstring, startIndexPatternDoubleQuotes)));
-                            }
+                        // " " ' ' situation
+                        if (startOfDoubleQuotes < startOfSingleQuotes) {
+                            endOfWithoutQuotes = startOfDoubleQuotes;
                             // send everything inside the double quotes to substitute variables
                             // the double quotes themselves will be deleted
-                            if (endIndexPatternDoubleQuotes - startIndexPatternDoubleQuotes > 0) {
-                                result.append(substitutionVariables(
-                                        line.substring(startIndexPatternDoubleQuotes + 1, endIndexPatternDoubleQuotes - 1)));
+                            if (endOfDoubleQuotes - startOfDoubleQuotes > 0) {
+                                substitution = String.valueOf(substitutionVariables(
+                                        line.substring(startOfDoubleQuotes + 1, endOfDoubleQuotes - 1)));
                             }
-                            startIndexSubstring = endIndexPatternDoubleQuotes;
-                            // mark that the inverted commas have been processed
-                            flD = false;
+                            nextStartIndexSubstring = endOfDoubleQuotes;
+                            // mark that the quotes have been processed
+                            foundDouble = false;
                         }
-                        // if single quotes go before
+                        // ' ' " "
                         else {
-                            // if there is an unprocessed string between the current pattern found and the previous one
-                            // we give it to substitute variables
-                            if (startIndexPatternSingleQuotes - startIndexSubstring > 0) {
-                                result.append(substitutionVariables(
-                                        line.substring(startIndexSubstring, startIndexPatternSingleQuotes)));
-                            }
+                            endOfWithoutQuotes = startOfSingleQuotes;
                             // add a line in single quotes, the quotes themselves will be cut out
-                            if (endIndexPatternSingleQuotes - startIndexPatternSingleQuotes > 0) {
-                                result.append(line, startIndexPatternSingleQuotes + 1, endIndexPatternSingleQuotes - 1);
+                            if (endOfSingleQuotes - startOfSingleQuotes > 0) {
+                                substitution = line.substring(startOfSingleQuotes + 1, endOfSingleQuotes - 1);
                             }
-                            startIndexSubstring = endIndexPatternSingleQuotes;
-                            // mark that the inverted commas have been processed
-                            flS = false;
+                            nextStartIndexSubstring = endOfSingleQuotes;
+                            // mark that the quotes have been processed
+                            foundSingle = false;
                         }
                     }
                 }
             }
             // if you have found even one type of inverted comma
-            else if (flD || flS) {
-                if (flD) {
-                    // if there is an unprocessed string between the current pattern found and the previous one
-                    // we give it to substitute variables
-                    if (startIndexPatternDoubleQuotes - startIndexSubstring > 0) {
-                        result.append(substitutionVariables(line.substring(startIndexSubstring, startIndexPatternDoubleQuotes)));
-                    }
-                    // send everything inside the double quotes to substitute variables
-                    // the double quotes themselves will be deleted
-                    if (endIndexPatternDoubleQuotes - startIndexPatternDoubleQuotes > 0) {
-                        result.append(substitutionVariables(
-                                line.substring(startIndexPatternDoubleQuotes + 1, endIndexPatternDoubleQuotes - 1)));
-                    }
-                    startIndexSubstring = endIndexPatternDoubleQuotes;
-                    // mark that the inverted commas have been processed
-                    flD = false;
-                } else {
-                    // if there is an unprocessed string between the current pattern found and the previous one
-                    // we give it to substitute variables
-                    if (startIndexPatternSingleQuotes - startIndexSubstring > 0) {
-                        result.append(substitutionVariables(
-                                line.substring(startIndexSubstring, startIndexPatternSingleQuotes)));
-                    }
-                    // add a line in single quotes, the quotes themselves will be cut out
-                    if (endIndexPatternSingleQuotes - startIndexPatternSingleQuotes > 0) {
-                        result.append(line, startIndexPatternSingleQuotes + 1, endIndexPatternSingleQuotes - 1);
-                    }
-                    startIndexSubstring = endIndexPatternSingleQuotes;
-                    // mark that the inverted commas have been processed
-                    flS = false;
+            else if (foundDouble) {
+                endOfWithoutQuotes = startOfDoubleQuotes;
+                // send everything inside the double quotes to substitute variables
+                // the double quotes themselves will be deleted
+                if (endOfDoubleQuotes - startOfDoubleQuotes > 0) {
+                    substitution = String.valueOf(substitutionVariables(
+                            line.substring(startOfDoubleQuotes + 1, endOfDoubleQuotes - 1)));
                 }
+                nextStartIndexSubstring = endOfDoubleQuotes;
+                // mark that the quotes have been processed
+                foundDouble = false;
+            } else if (foundSingle) {
+                endOfWithoutQuotes = startOfSingleQuotes;
+                if (endOfSingleQuotes - startOfSingleQuotes > 0) {
+                    substitution = line.substring(startOfSingleQuotes + 1, endOfSingleQuotes - 1);
+                }
+                nextStartIndexSubstring = endOfSingleQuotes;
+                // mark that the quotes have been processed
+                foundSingle = false;
             }
             // if there are no pattern entries
             else {
-                // if there is an unprocessed string between the last pattern found
-                // we give it to substitute variables
-                if (line.length() - startIndexSubstring > 0) {
-                    result.append(substitutionVariables(
-                            line.substring(startIndexSubstring)));
-                }
-                startIndexSubstring = line.length();
+                endOfWithoutQuotes = line.length();
+                substitution = "";
+                nextStartIndexSubstring = line.length();
             }
+            // if there is an unprocessed string between the current pattern found and the previous one
+            // we give it to substitute variables
+            result.append(substringProcessingWithoutQuotes(startIndexSubstring, endOfWithoutQuotes, line));
+            result.append(substitution);
+            startIndexSubstring = nextStartIndexSubstring;
         }
+        String res = result.toString().replaceAll("\\\\", "");
+        result = new StringBuilder(res);
         return result;
     }
     
@@ -253,13 +233,34 @@ public class Parser {
     private StringBuilder substitutionVariables(String line) {
         StringBuilder result = new StringBuilder();
         int index = 0;
-        matcherVariables = patternVariables.matcher(line);
+        Matcher matcherVariables = variables.matcher(line);
         while (matcherVariables.find()) {
-            // add a line before the variable
-            result.append(line, index, matcherVariables.start());
-            localStorage.get(line.substring(matcherVariables.start() + 1,
-                                            matcherVariables.end())).ifPresent(result::append);
-            index = matcherVariables.end();
+            String beforeDollarSymbol = line.substring(index, matcherVariables.start());
+            int countOfBackslashes = 0;
+            while (beforeDollarSymbol.lastIndexOf("\\") != -1) {
+                countOfBackslashes++;
+                beforeDollarSymbol = beforeDollarSymbol.substring(0, beforeDollarSymbol.lastIndexOf("\\"));
+            }
+            if (countOfBackslashes % 2 == 0) {
+                // add a line before the variable
+                result.append(line, index, matcherVariables.start());
+                String subline = line.substring(matcherVariables.start(), matcherVariables.end());
+                while (subline.startsWith("$$")) {
+                    result.append("$$");
+                    subline = subline.substring(2);
+                }
+                if (subline.startsWith("$")) {
+                    subline = subline.substring(1);
+                    int indexSpace = subline.indexOf(' ');
+                    localStorage.get(subline.replaceAll(" +", "")).ifPresent(result::append);
+                    if (indexSpace != -1) {
+                        result.append(' ');
+                    }
+                    index = matcherVariables.end();
+                } else {
+                    index = line.length() - subline.length();
+                }
+            }
         }
         if (line.length() - index > 0) {
             result.append(line, index, line.length());
@@ -278,7 +279,7 @@ public class Parser {
      */
     public List<CommandInfo> commandParser(String line) {
         List<CommandInfo> commands = new ArrayList<>();
-        matcherVariableAddition = patternVariableAddition.matcher(line);
+        Matcher matcherVariableAddition = variableAddition.matcher(line);
         if (matcherVariableAddition.find()) {
             int indexEq = line.indexOf("=");
             localStorage.set(line.substring(0, indexEq), line.substring(indexEq + 1));
@@ -292,7 +293,7 @@ public class Parser {
                 List<String> param = new ArrayList<>();
                 String newLine = line.substring(index + 1);
                 if (Checker.checkCommandIsInternal(name)) {
-                    matcherFlag = patternFlag.matcher(newLine);
+                    Matcher matcherFlag = flag.matcher(newLine);
                     index = 0;
                     while (matcherFlag.find()) {
                         if (matcherFlag.start() - index > 0) {

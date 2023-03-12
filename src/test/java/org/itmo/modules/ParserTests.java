@@ -1,13 +1,11 @@
-package modules;
+package org.itmo.modules;
 
-import org.itmo.modules.Parser;
 import org.itmo.utils.CommandInfo;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 
-import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.stream.Stream;
@@ -20,7 +18,7 @@ public class ParserTests {
     
     @ParameterizedTest
     @MethodSource("testingDifferentStrings")
-    public void parsStringTest (String expected, String actual) {
+    public void parseStringTest (String expected, String actual) {
         assertEquals(expected, parser.substitutor(actual).toString());
     }
     
@@ -39,14 +37,19 @@ public class ParserTests {
     }
     
     @Test
-    public void addVariable() {
+    public void shouldCorrectlySubstitute() {
         parser.commandParser("x=y");
         assertEquals("echo y", parser.substitutor("echo $x").toString());
+        assertEquals("echo y", parser.substitutor("echo \\\\$x").toString());
+        assertEquals("echo y $x", parser.substitutor("echo \\\\$x \\$x").toString());
+        assertEquals("echo $x", parser.substitutor("echo \\$x").toString());
+        assertEquals("echo $$x", parser.substitutor("echo $$x").toString());
+        assertEquals("echo $$y y", parser.substitutor("echo $$$x $x").toString());
     }
     
     @ParameterizedTest
     @MethodSource("commands")
-    public void parsCommands(String line, CommandInfo expected) {
+    public void parseCommands(String line, CommandInfo expected) {
 
         CommandInfo commandInfo = parser.commandParser(line).get(0);
         assertEquals(commandInfo.getCommandName(), expected.getCommandName());

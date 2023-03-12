@@ -16,7 +16,6 @@ public class Parser {
     
     private final Pattern singleQuotes;
     private final Pattern doubleQuotes;
-    private final Pattern backslashesAtTheEnd;
     private final Pattern variables;
     private final Pattern variableAddition;
     private final Pattern flag;
@@ -25,8 +24,7 @@ public class Parser {
         localStorage = new LocalStorage();
         singleQuotes = Pattern.compile("'[^']*'");
         doubleQuotes = Pattern.compile("\"[^\"]*\"");
-        backslashesAtTheEnd = Pattern.compile("[^\\\\]*\\\\*$");
-        variables = Pattern.compile("\\$[^$ ]+ *");
+        variables = Pattern.compile("\\$+[^$ ]+ *");
         variableAddition = Pattern.compile("^[^= ]+=[^ ]*");
         flag = Pattern.compile("-{1,2}[^- ]+ *");
     }
@@ -246,13 +244,22 @@ public class Parser {
             if (countOfBackslashes % 2 == 0) {
                 // add a line before the variable
                 result.append(line, index, matcherVariables.start());
-                String subline = line.substring(matcherVariables.start() + 1, matcherVariables.end());
-                int indexSpace = subline.indexOf(' ');
-                localStorage.get(subline.replaceAll(" +", "")).ifPresent(result::append);
-                if (indexSpace != -1) {
-                    result.append(' ');
+                String subline = line.substring(matcherVariables.start(), matcherVariables.end());
+                while (subline.startsWith("$$")) {
+                    result.append("$$");
+                    subline = subline.substring(2);
                 }
-                index = matcherVariables.end();
+                if (subline.startsWith("$")) {
+                    subline = subline.substring(1);
+                    int indexSpace = subline.indexOf(' ');
+                    localStorage.get(subline.replaceAll(" +", "")).ifPresent(result::append);
+                    if (indexSpace != -1) {
+                        result.append(' ');
+                    }
+                    index = matcherVariables.end();
+                } else {
+                    index = line.length() - subline.length();
+                }
             }
         }
         if (line.length() - index > 0) {

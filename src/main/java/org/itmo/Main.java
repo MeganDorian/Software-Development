@@ -12,22 +12,22 @@ import org.itmo.utils.CommandResultSaver;
 import java.util.List;
 
 public class Main {
+    private static final String ANSI_GREEN = "\u001B[32m";
+    private static final String ANSI_RESET = "\u001B[0m";
+    
     public static void main(String[] args) {
         Reader reader = new Reader();
         Parser parser = new Parser();
         Checker checker = new Checker();
         Executor executor = new Executor();
         List<CommandInfo> allCommands;
-        do
-        {
-            System.out.print("> ");
+        do {
+            System.out.print(ANSI_GREEN + ">> " + ANSI_RESET);
             String command = reader.readInput();
             allCommands = parser.commandParser(parser.substitutor(command).toString());
-            try
-            {
+            try {
                 checker.checkCommand(allCommands);
-            } catch (FlagNotFoundException | CheckerException e)
-            {
+            } catch (FlagNotFoundException | CheckerException e) {
                 System.out.println(e.getCause().getMessage());
                 allCommands.clear();
             }

@@ -257,8 +257,12 @@ public class Parser {
         while (matcherVariables.find()) {
             // add a line before the variable
             result.append(line, index, matcherVariables.start());
-            localStorage.get(line.substring(matcherVariables.start() + 1,
-                                            matcherVariables.end())).ifPresent(result::append);
+            String subline = line.substring(matcherVariables.start() + 1, matcherVariables.end());
+            int indexSpace = subline.indexOf(' ');
+            localStorage.get(subline.replaceAll(" +", "")).ifPresent(result::append);
+            if(indexSpace != -1) {
+                result.append(' ');
+            }
             index = matcherVariables.end();
         }
         if (line.length() - index > 0) {

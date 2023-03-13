@@ -1,7 +1,6 @@
 package org.itmo.modules;
 
 import org.itmo.utils.CommandInfo;
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -36,15 +35,24 @@ public class ParserTests {
         );
     }
     
-    @Test
-    public void shouldCorrectlySubstitute() {
+    static Stream<? extends Arguments> substitutes() {
+        return Stream.of(
+                Arguments.of("echo y", "echo $x"),
+                Arguments.of("echo ==c", "echo $a"),
+                Arguments.of("echo \\y", "echo \\\\$x"),
+                Arguments.of("echo \\y $x", "echo \\\\$x \\$x"),
+                Arguments.of("echo \\$x", "echo \\\\\\$x"),
+                Arguments.of("echo $$x", "echo $$x"),
+                Arguments.of("echo $$y y", "echo $$$x $x")
+        );
+    }
+    
+    @ParameterizedTest
+    @MethodSource("substitutes")
+    public void shouldCorrectlySubstitute(String expected, String substitute) {
         parser.commandParser("x=y");
-        assertEquals("echo y", parser.substitutor("echo $x").toString());
-        assertEquals("echo y", parser.substitutor("echo \\\\$x").toString());
-        assertEquals("echo y $x", parser.substitutor("echo \\\\$x \\$x").toString());
-        assertEquals("echo $x", parser.substitutor("echo \\$x").toString());
-        assertEquals("echo $$x", parser.substitutor("echo $$x").toString());
-        assertEquals("echo $$y y", parser.substitutor("echo $$$x $x").toString());
+        parser.commandParser("a===c");
+        assertEquals(expected, parser.substitutor(substitute).toString());
     }
     
     @ParameterizedTest

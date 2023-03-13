@@ -82,9 +82,13 @@ public class Parser {
         String[] piped = line.split("\\|");
         for (int i = 0; i < piped.length; i++) {
             if (isEscaped(piped[i])) {
-                // for situations like .... \| we need to concat it with  the next divided element
-                String concat = replaceEvenCountOfBackslashesWithSingles(piped[i]) +
-                        (i + 1 != piped.length ? "|" + piped[i + 1] : "");
+                String concat;
+                if (line.contains("|") && line.charAt(piped[i].length()) == '|') {
+                    concat = replaceEvenCountOfBackslashesWithSingles(piped[i]) + "|" + (i + 1 != piped.length ? piped[i + 1] : "");
+                    i++;
+                } else {
+                    concat = replaceEvenCountOfBackslashesWithSingles(piped[i]);
+                }
                 potentialCommands.add(substitutionVariables(concat));
             } else {
                 potentialCommands.add(substitutionVariables(piped[i]));
@@ -123,7 +127,6 @@ public class Parser {
         int endOfWithoutQuotes;
         int nextStartIndexSubstring;
         List<StringBuilder> potentialCommands = new ArrayList<>();
-        potentialCommands.add(new StringBuilder());
         boolean isEndsWithPipe = false;
         // marks whether to look for the next occurrence of the pattern
         boolean foundSingle = false, foundDouble = false;
@@ -265,22 +268,25 @@ public class Parser {
             if (endOfWithoutQuotes - startIndexSubstring > 0) {
                 String substring = line.substring(startIndexSubstring, endOfWithoutQuotes).replaceAll(" +", " ");
                 List<StringBuilder> piped = substringProcessingWithoutQuotes(substring);
-                if (!isEndsWithPipe) {
+                
+                if (potentialCommands.size() == 0) {
+                    potentialCommands.addAll(piped);
+                } else if (!isEndsWithPipe) {
                     String concat = (potentialCommands.get(potentialCommands.size() - 1) + piped.get(0).toString()).trim();
                     potentialCommands.remove(potentialCommands.size() - 1);
                     potentialCommands.add(new StringBuilder(concat));
                     if (piped.size() > 1) {
-                        potentialCommands.addAll(piped.subList(1, piped.size() - 1));
+                        potentialCommands.addAll(piped.subList(1, piped.size()));
                     }
                 }
                 isEndsWithPipe = substring.endsWith("|");
-            }
-            if (!isEndsWithPipe) {
-                String concat = (potentialCommands.get(potentialCommands.size() - 1) + " " + substitution).trim();
-                potentialCommands.remove(potentialCommands.size() - 1);
-                potentialCommands.add(new StringBuilder(concat));
-            } else if (!Objects.equals(substitution, "")) {
-                potentialCommands.add(new StringBuilder(substitution));
+                if (!isEndsWithPipe) {
+                    String concat = (potentialCommands.get(potentialCommands.size() - 1) + substitution);
+                    potentialCommands.remove(potentialCommands.size() - 1);
+                    potentialCommands.add(new StringBuilder(concat));
+                } else if (!Objects.equals(substitution, "")) {
+                    potentialCommands.add(new StringBuilder(substitution));
+                }
             }
             startIndexSubstring = nextStartIndexSubstring;
         }

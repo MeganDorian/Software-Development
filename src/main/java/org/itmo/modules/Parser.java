@@ -3,6 +3,7 @@ package org.itmo.modules;
 import org.itmo.utils.CommandInfo;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.regex.Matcher;
@@ -99,7 +100,8 @@ public class Parser {
         while (substring.endsWith("\\")) {
             substring = substring.substring(0, substring.lastIndexOf("\\"));
         }
-        return substring + (backslashesCount != 0 ? "\\".repeat(backslashesCount / 2) : "");
+        return substring + (backslashesCount != 0 ?
+                String.join("\\", Collections.nCopies(backslashesCount / 2, "\\")) : "");
     }
     
     /**
@@ -167,7 +169,7 @@ public class Parser {
      * @param line -- processing string
      * @return substitution string
      */
-    public List<StringBuilder> substitutor(String line) {
+    public List<String> substitutor(String line) {
         line = line.trim();
         Matcher matcherSingleQuotes = singleQuotes.matcher(line);
         Matcher matcherDoubleQuotes = doubleQuotes.matcher(line);
@@ -272,7 +274,9 @@ public class Parser {
             }
             startSubstring = toSearchIndexes.second;
         }
-        return potentialCommands;
+        List<String> parsedCommand = new ArrayList<>();
+        potentialCommands.forEach(p -> parsedCommand.add(p.toString().trim()));
+        return parsedCommand;
     }
     
     /**
@@ -284,9 +288,9 @@ public class Parser {
      * @return command name, flags and parameters if it is a command
      * and an empty list if it is a variable initialisation/reinitialisation
      */
-    public List<CommandInfo> commandParser(List<StringBuilder> parsedCommands) {
+    public List<CommandInfo> commandParser(List<String> parsedCommands) {
         List<CommandInfo> commands = new ArrayList<>();
-        for (StringBuilder parsedCommand : parsedCommands) {
+        for (String parsedCommand : parsedCommands) {
             Matcher matcherVariableAddition = variableAddition.matcher(parsedCommand);
             if (matcherVariableAddition.find()) {
                 int indexEq = parsedCommand.indexOf("=");
@@ -294,7 +298,7 @@ public class Parser {
             } else {
                 int index = parsedCommand.indexOf(" ");
                 if (index == -1) {
-                    commands.add(new CommandInfo(parsedCommand.toString(), new ArrayList<>(), new ArrayList<>()));
+                    commands.add(new CommandInfo(parsedCommand, Collections.emptyList(), Collections.emptyList()));
                 } else {
                     String name = parsedCommand.substring(0, index);
                     List<String> flags = new ArrayList<>();

@@ -10,6 +10,7 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Stream;
@@ -35,10 +36,18 @@ public class ExecutorTests {
     }
     
     public static Stream<? extends Arguments> forRunAllCommandsTest() {
-        return Stream.of(Arguments.of(
-                List.of(new CommandInfo("echo", new ArrayList<>(), List.of("some string"))), "some string"),
-                         Arguments.of(List.of(new CommandInfo("cat", new ArrayList<>(), List.of("some text")),
-                                              new CommandInfo("wc", new ArrayList<>(), new ArrayList<>())), ""));
+        return Stream.of(
+                Arguments.of(
+                        List.of(new CommandInfo("echo", Collections.emptyList(), List.of("some string"))),
+                        "some string"),
+                Arguments.of(
+                        List.of(new CommandInfo("cat", Collections.emptyList(), List.of("some text")),
+                                new CommandInfo("wc", Collections.emptyList(), Collections.emptyList())),
+                        ""),
+                Arguments.of(List.of(new CommandInfo("echo", Collections.emptyList(), List.of("text")),
+                                new CommandInfo("echo", Collections.emptyList(), Collections.emptyList())),
+                        "text")
+        );
     }
     
 }

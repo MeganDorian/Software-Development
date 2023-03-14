@@ -17,16 +17,16 @@ public class ParserTests {
     
     static Stream<? extends Arguments> commands() {
         return Stream.of(
-                Arguments.of(List.of(new StringBuilder("echo sffslk")), new CommandInfo("echo",
+                Arguments.of(List.of("echo sffslk"), new CommandInfo("echo",
                         new ArrayList<>(),
                         List.of("sffslk"))),
-                Arguments.of(List.of(new StringBuilder("cat -h smth")), new CommandInfo("cat",
+                Arguments.of(List.of("cat -h smth"), new CommandInfo("cat",
                         List.of("-h"),
                         List.of("smth"))),
-                Arguments.of(List.of(new StringBuilder("someCommand")), new CommandInfo("someCommand",
+                Arguments.of(List.of("someCommand"), new CommandInfo("someCommand",
                         new ArrayList<>(),
                         new ArrayList<>())),
-                Arguments.of(List.of(new StringBuilder("cat --E some.txt get.txt")), new CommandInfo("cat",
+                Arguments.of(List.of("cat --E some.txt get.txt"), new CommandInfo("cat",
                         List.of("--E"),
                         List.of("some.txt", "get.txt")))
         );
@@ -34,83 +34,83 @@ public class ParserTests {
     
     static Stream<? extends Arguments> testingDifferentStrings() {
         return Stream.of(
-                Arguments.of(List.of(new StringBuilder("this is just (a) string")), "this is just (a) string"),
-                Arguments.of(List.of(new StringBuilder("this is some string")), "this is 'some' string"),
-                Arguments.of(List.of(new StringBuilder("this is string")), "this is \"string\""),
-                Arguments.of(List.of(new StringBuilder("this is 'a' string")), "this \"is 'a'\" string"),
-                Arguments.of(List.of(new StringBuilder("this is \"a\" string")), "this 'is \"a\"' string"),
-                Arguments.of(List.of(new StringBuilder("this is a string'")), "this is a string'"),
-                Arguments.of(List.of(new StringBuilder("this is a string\"")), "this is a string\""),
-                Arguments.of(List.of(new StringBuilder("this is \"a\" string")), "this 'is \"a'\" string"),
-                Arguments.of(List.of(new StringBuilder("this is 'a' string")), "this \"is 'a\"' string")
+                Arguments.of(List.of("this is just (a) string"), "this is just (a) string"),
+                Arguments.of(List.of("this is some string"), "this is 'some' string"),
+                Arguments.of(List.of("this is string"), "this is \"string\""),
+                Arguments.of(List.of("this is 'a' string"), "this \"is 'a'\" string"),
+                Arguments.of(List.of("this is \"a\" string"), "this 'is \"a\"' string"),
+                Arguments.of(List.of("this is a string'"), "this is a string'"),
+                Arguments.of(List.of("this is a string\""), "this is a string\""),
+                Arguments.of(List.of("this is \"a\" string"), "this 'is \"a'\" string"),
+                Arguments.of(List.of("this is 'a' string"), "this \"is 'a\"' string")
         );
     }
     
     static Stream<? extends Arguments> pipes() {
         return Stream.of(
-                Arguments.of("echo ds | cat ds", List.of(new StringBuilder("echo ds"), new StringBuilder("cat ds"))),
-                Arguments.of("echo ds|cat ds", List.of(new StringBuilder("echo ds"), new StringBuilder("cat ds"))),
-                Arguments.of("echo ds|", List.of(new StringBuilder("echo ds"))),
-                Arguments.of("echo ds| ", List.of(new StringBuilder("echo ds"))),
-                Arguments.of("echo ds\\| ", List.of(new StringBuilder("echo ds| "))),
-                Arguments.of("echo ds \\| cat", List.of(new StringBuilder("echo ds | cat"))),
-                Arguments.of("echo ds \\\\| cat", List.of(new StringBuilder("echo ds \\"), new StringBuilder("cat"))),
-                Arguments.of("echo 'ds |' cat", List.of(new StringBuilder("echo ds | cat"))),
-                Arguments.of("echo \"ds |\" cat", List.of(new StringBuilder("echo ds | cat"))),
-                Arguments.of("echo \"ds $|\" cat", List.of(new StringBuilder("echo ds  cat"))),
+                Arguments.of("echo ds | cat ds", List.of("echo ds", "cat ds")),
+                Arguments.of("echo ds|cat ds", List.of("echo ds", "cat ds")),
+                Arguments.of("echo ds|", List.of("echo ds")),
+                Arguments.of("echo ds| ", List.of("echo ds")),
+                Arguments.of("echo ds\\| ", List.of("echo ds| ")),
+                Arguments.of("echo ds \\| cat", List.of("echo ds | cat")),
+                Arguments.of("echo ds \\\\| cat", List.of("echo ds \\", "cat")),
+                Arguments.of("echo 'ds |' cat", List.of("echo ds | cat")),
+                Arguments.of("echo \"ds |\" cat", List.of("echo ds | cat")),
+                Arguments.of("echo \"ds $|\" cat", List.of("echo ds  cat")),
                 Arguments.of("this is \"a\" string | this is 'a' string",
-                        List.of(new StringBuilder("this is a string"), new StringBuilder("this is a string")))
+                        List.of("this is a string", "this is a string"))
         );
     }
     
     static Stream<? extends Arguments> substitutes() {
         return Stream.of(
-                Arguments.of(List.of(new StringBuilder("echo y")), "echo $x"),
-                Arguments.of(List.of(new StringBuilder("echo ==c")), "echo $a"),
-                Arguments.of(List.of(new StringBuilder("echo \\y")), "echo \\\\$x"),
-                Arguments.of(List.of(new StringBuilder("echo \\y $x")), "echo \\\\$x \\$x"),
-                Arguments.of(List.of(new StringBuilder("echo \\$x")), "echo \\\\\\$x"),
-                Arguments.of(List.of(new StringBuilder("echo $$x")), "echo $$x"),
-                Arguments.of(List.of(new StringBuilder("echo $$y y")), "echo $$$x $x"),
-                Arguments.of(List.of(new StringBuilder("echo y \\")), "echo $x \\\\")
+                Arguments.of(List.of("echo y"), "echo $x"),
+                Arguments.of(List.of("echo ==c"), "echo $a"),
+                Arguments.of(List.of("echo \\y"), "echo \\\\$x"),
+                Arguments.of(List.of("echo \\y $x"), "echo \\\\$x \\$x"),
+                Arguments.of(List.of("echo \\$x"), "echo \\\\\\$x"),
+                Arguments.of(List.of("echo $$x"), "echo $$x"),
+                Arguments.of(List.of("echo $$y y"), "echo $$$x $x"),
+                Arguments.of(List.of("echo y \\"), "echo $x \\\\")
         );
     }
     
     @ParameterizedTest
     @MethodSource("testingDifferentStrings")
-    public void parseStringTest(List<StringBuilder> expected, String actual) {
-        List<StringBuilder> result = parser.substitutor(actual);
+    public void parseStringTest(List<String> expected, String actual) {
+        List<String> result = parser.substitutor(actual);
         assertEquals(expected.size(), result.size());
         for (int i = 0; i < expected.size(); i++) {
-            assertEquals(expected.get(i).toString(), result.get(i).toString());
+            assertEquals(expected.get(i), result.get(i));
         }
     }
     
     @ParameterizedTest
     @MethodSource("substitutes")
-    public void shouldCorrectlySubstitute(List<StringBuilder> expected, String substitute) {
-        parser.commandParser(List.of(new StringBuilder("x=y")));
-        parser.commandParser(List.of(new StringBuilder("a===c")));
-        List<StringBuilder> result = parser.substitutor(substitute);
+    public void shouldCorrectlySubstitute(List<String> expected, String substitute) {
+        parser.commandParser(List.of("x=y"));
+        parser.commandParser(List.of("a===c"));
+        List<String> result = parser.substitutor(substitute);
         assertEquals(expected.size(), result.size());
         for (int i = 0; i < expected.size(); i++) {
-            assertEquals(expected.get(i).toString(), result.get(i).toString());
+            assertEquals(expected.get(i), result.get(i));
         }
     }
     
     @ParameterizedTest
     @MethodSource("pipes")
-    public void shouldParseWithPipes(String input, List<StringBuilder> expected) {
-        List<StringBuilder> result = parser.substitutor(input);
+    public void shouldParseWithPipes(String input, List<String> expected) {
+        List<String> result = parser.substitutor(input);
         assertEquals(expected.size(), result.size());
         for (int i = 0; i < expected.size(); i++) {
-            assertEquals(expected.get(i).toString().trim(), result.get(i).toString().trim());
+            assertEquals(expected.get(i).trim(), result.get(i).trim());
         }
     }
     
     @ParameterizedTest
     @MethodSource("commands")
-    public void parseCommands(List<StringBuilder> line, CommandInfo expected) {
+    public void parseCommands(List<String> line, CommandInfo expected) {
         CommandInfo commandInfo = parser.commandParser(line).get(0);
         assertEquals(commandInfo.getCommandName(), expected.getCommandName());
         assertEquals(expected.getFlags().size(), commandInfo.getFlags().size());

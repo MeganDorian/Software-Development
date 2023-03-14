@@ -24,7 +24,7 @@ public class Main {
         do {
             System.out.print(ANSI_GREEN + ">> " + ANSI_RESET);
             String command = reader.readInput();
-            allCommands = parser.commandParser(parser.substitutor(command).toString());
+            allCommands = parser.commandParser(parser.substitutor(command));
             try {
                 checker.checkCommand(allCommands);
             } catch (FlagNotFoundException | CheckerException e) {

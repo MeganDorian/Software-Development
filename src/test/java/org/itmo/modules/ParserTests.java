@@ -15,20 +15,20 @@ public class ParserTests {
     
     Parser parser = new Parser();
     
-    static Stream<? extends Arguments> pipes() {
+    static Stream<? extends Arguments> commands() {
         return Stream.of(
-                Arguments.of("echo ds | cat ds", List.of(new StringBuilder("echo ds"), new StringBuilder("cat ds"))),
-                Arguments.of("echo ds|cat ds", List.of(new StringBuilder("echo ds"), new StringBuilder("cat ds"))),
-                Arguments.of("echo ds|", List.of(new StringBuilder("echo ds"))),
-                Arguments.of("echo ds| ", List.of(new StringBuilder("echo ds"))),
-                Arguments.of("echo ds\\| ", List.of(new StringBuilder("echo ds| "))),
-                Arguments.of("echo ds \\| cat", List.of(new StringBuilder("echo ds | cat"))),
-                Arguments.of("echo ds \\\\| cat", List.of(new StringBuilder("echo ds \\"), new StringBuilder("cat"))),
-                Arguments.of("echo 'ds |' cat", List.of(new StringBuilder("echo ds | cat"))),
-                Arguments.of("echo \"ds |\" cat", List.of(new StringBuilder("echo ds | cat"))),
-                Arguments.of("echo \"ds $|\" cat", List.of(new StringBuilder("echo ds  cat"))),
-                Arguments.of("this is \"a\" string | this is 'a' string",
-                        List.of(new StringBuilder("this is a string"), new StringBuilder("this is a string")))
+                Arguments.of(List.of(new StringBuilder("echo sffslk")), new CommandInfo("echo",
+                        new ArrayList<>(),
+                        List.of("sffslk"))),
+                Arguments.of(List.of(new StringBuilder("cat -h smth")), new CommandInfo("cat",
+                        List.of("-h"),
+                        List.of("smth"))),
+                Arguments.of(List.of(new StringBuilder("someCommand")), new CommandInfo("someCommand",
+                        new ArrayList<>(),
+                        new ArrayList<>())),
+                Arguments.of(List.of(new StringBuilder("cat --E some.txt get.txt")), new CommandInfo("cat",
+                        List.of("--E"),
+                        List.of("some.txt", "get.txt")))
         );
     }
     
@@ -46,14 +46,21 @@ public class ParserTests {
         );
     }
     
-    @ParameterizedTest
-    @MethodSource("testingDifferentStrings")
-    public void parseStringTest(List<StringBuilder> expected, String actual) {
-        List<StringBuilder> result = parser.substitutor(actual);
-        assertEquals(expected.size(), result.size());
-        for (int i = 0; i < expected.size(); i++) {
-            assertEquals(expected.get(i).toString(), result.get(i).toString());
-        }
+    static Stream<? extends Arguments> pipes() {
+        return Stream.of(
+                Arguments.of("echo ds | cat ds", List.of(new StringBuilder("echo ds"), new StringBuilder("cat ds"))),
+                Arguments.of("echo ds|cat ds", List.of(new StringBuilder("echo ds"), new StringBuilder("cat ds"))),
+                Arguments.of("echo ds|", List.of(new StringBuilder("echo ds"))),
+                Arguments.of("echo ds| ", List.of(new StringBuilder("echo ds"))),
+                Arguments.of("echo ds\\| ", List.of(new StringBuilder("echo ds| "))),
+                Arguments.of("echo ds \\| cat", List.of(new StringBuilder("echo ds | cat"))),
+                Arguments.of("echo ds \\\\| cat", List.of(new StringBuilder("echo ds \\"), new StringBuilder("cat"))),
+                Arguments.of("echo 'ds |' cat", List.of(new StringBuilder("echo ds | cat"))),
+                Arguments.of("echo \"ds |\" cat", List.of(new StringBuilder("echo ds | cat"))),
+                Arguments.of("echo \"ds $|\" cat", List.of(new StringBuilder("echo ds  cat"))),
+                Arguments.of("this is \"a\" string | this is 'a' string",
+                        List.of(new StringBuilder("this is a string"), new StringBuilder("this is a string")))
+        );
     }
     
     static Stream<? extends Arguments> substitutes() {
@@ -70,10 +77,20 @@ public class ParserTests {
     }
     
     @ParameterizedTest
+    @MethodSource("testingDifferentStrings")
+    public void parseStringTest(List<StringBuilder> expected, String actual) {
+        List<StringBuilder> result = parser.substitutor(actual);
+        assertEquals(expected.size(), result.size());
+        for (int i = 0; i < expected.size(); i++) {
+            assertEquals(expected.get(i).toString(), result.get(i).toString());
+        }
+    }
+    
+    @ParameterizedTest
     @MethodSource("substitutes")
     public void shouldCorrectlySubstitute(List<StringBuilder> expected, String substitute) {
-        parser.commandParser("x=y");
-        parser.commandParser("a===c");
+        parser.commandParser(List.of(new StringBuilder("x=y")));
+        parser.commandParser(List.of(new StringBuilder("a===c")));
         List<StringBuilder> result = parser.substitutor(substitute);
         assertEquals(expected.size(), result.size());
         for (int i = 0; i < expected.size(); i++) {
@@ -81,26 +98,19 @@ public class ParserTests {
         }
     }
     
-    static Stream<? extends Arguments> commands() {
-        return Stream.of(
-                Arguments.of("echo sffslk", new CommandInfo("echo",
-                        new ArrayList<>(),
-                        List.of("sffslk"))),
-                Arguments.of("cat -h smth", new CommandInfo("cat",
-                        List.of("-h"),
-                        List.of("smth"))),
-                Arguments.of("someCommand", new CommandInfo("someCommand",
-                        new ArrayList<>(),
-                        new ArrayList<>())),
-                Arguments.of("cat --E some.txt get.txt", new CommandInfo("cat",
-                        List.of("--E"),
-                        List.of("some.txt", "get.txt")))
-        );
+    @ParameterizedTest
+    @MethodSource("pipes")
+    public void shouldParseWithPipes(String input, List<StringBuilder> expected) {
+        List<StringBuilder> result = parser.substitutor(input);
+        assertEquals(expected.size(), result.size());
+        for (int i = 0; i < expected.size(); i++) {
+            assertEquals(expected.get(i).toString().trim(), result.get(i).toString().trim());
+        }
     }
     
     @ParameterizedTest
     @MethodSource("commands")
-    public void parseCommands(String line, CommandInfo expected) {
+    public void parseCommands(List<StringBuilder> line, CommandInfo expected) {
         CommandInfo commandInfo = parser.commandParser(line).get(0);
         assertEquals(commandInfo.getCommandName(), expected.getCommandName());
         assertEquals(expected.getFlags().size(), commandInfo.getFlags().size());
@@ -110,16 +120,6 @@ public class ParserTests {
         }
         for (int i = 0; i < expected.getParams().size(); i++) {
             assertEquals(commandInfo.getParams().get(i), expected.getParams().get(i));
-        }
-    }
-    
-    @ParameterizedTest
-    @MethodSource("pipes")
-    public void shouldPareWithPipes(String input, List<StringBuilder> expected) {
-        List<StringBuilder> result = parser.substitutor(input);
-        assertEquals(expected.size(), result.size());
-        for (int i = 0; i < expected.size(); i++) {
-            assertEquals(expected.get(i).toString().trim(), result.get(i).toString().trim());
         }
     }
     

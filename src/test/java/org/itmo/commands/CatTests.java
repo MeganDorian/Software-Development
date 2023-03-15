@@ -75,19 +75,18 @@ public class CatTests {
     public void shouldGetFileContentWithFlags() throws URISyntaxException {
         File file = new File(Objects.requireNonNull(this.getClass().getClassLoader().getResource("cat/cat3")).toURI());
         int lineCount = 1;
-        StringBuilder content = new StringBuilder(FileUtils.loadFullContent(file));
-        content.insert(0, "\t" + lineCount + "\t\t");
-        int nextPosToReplace = content.indexOf("\r\n");
-        while (nextPosToReplace != -1) {
-            lineCount++;
-            content.replace(nextPosToReplace, nextPosToReplace + 2, "$\t" + lineCount + "\t\t");
-            nextPosToReplace = content.indexOf("\r\n");
+        StringBuilder content = new StringBuilder();
+        try(BufferedReader reader = new BufferedReader(new InputStreamReader(FileUtils.getFileFromResource("cat/cat3")))) {
+            while(reader.ready()) {
+                content.append("\t").append(lineCount).append("\t\t").append(reader.readLine()).append("$");
+                lineCount++;
+            }
+        } catch (IOException e) {
+            throw new RuntimeException(e);
         }
-        String expected = content + "$";
-        
         
         CommandInfo info = new CommandInfo(Commands.cat, List.of("-e", "-n"), List.of(file.getAbsolutePath()));
-        checkResult(expected, info);
+        checkResult(content.toString(), info);
     }
     
     @Test

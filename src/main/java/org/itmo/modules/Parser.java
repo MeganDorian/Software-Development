@@ -298,7 +298,7 @@ public class Parser {
             } else {
                 int index = parsedCommand.indexOf(" ");
                 if (index == -1) {
-                    commands.add(new CommandInfo(parsedCommand, Collections.emptyList(), Collections.emptyList()));
+                    commands.add(new CommandInfo(parsedCommand, new ArrayList<>(), new ArrayList<>()));
                 } else {
                     String name = parsedCommand.substring(0, index);
                     List<String> flags = new ArrayList<>();

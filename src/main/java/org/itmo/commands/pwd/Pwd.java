@@ -4,6 +4,7 @@ import org.itmo.commands.Command;
 import org.itmo.commands.Commands;
 import org.itmo.utils.*;
 
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -25,6 +26,11 @@ public class Pwd implements Command {
             String currentDirectory = System.getProperty("user.dir");
             CommandResultSaver.saveCommandResult(currentDirectory, false);
         }
+    }
+    
+    @Override
+    public void execute(InputStream stream) throws Exception {
+    
     }
     
     @Override

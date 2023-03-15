@@ -5,6 +5,7 @@ import lombok.experimental.UtilityClass;
 
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.PrintWriter;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -17,22 +18,49 @@ import java.nio.file.Path;
 public class CommandResultSaver {
     
     private final String commandResult = ResourcesLoader.getProperty("commandResult");
+    private final String pipeCommandResult = ResourcesLoader.getProperty("pipeResult");
     
     @Getter
     private static Path result;
+    @Getter
+    private static Path pipeResult;
+    
+    @Getter
+    private static String resultPath;
+    @Getter
+    private static String pipeResultPath;
     
     public void createCommandResultFile() throws IOException {
         result = Files.createTempFile(commandResult, ".cli");
+        pipeResult = Files.createTempFile(pipeCommandResult, ".cli");
+        resultPath = result.toAbsolutePath().toString();
+        pipeResultPath = pipeResult.toAbsolutePath().toString();
     }
     
     /**
-     * Saves result of command execution to temporary file
+     * Saves result of command execution to temporary piped file
      *
      * @param content content to save
      */
-    public void saveCommandResult(String content, boolean appendEndOfLine) {
-        try (FileOutputStream fileOutputStream = new FileOutputStream(result.toFile(), true)) {
-            fileOutputStream.write((content + (appendEndOfLine ? "\n" : "")).getBytes(StandardCharsets.UTF_8));
+    public void savePipeCommandResult(String content) {
+        try (FileOutputStream fileOutputStream = new FileOutputStream(pipeResult.toFile(), true)) {
+            fileOutputStream.write((content).getBytes(StandardCharsets.UTF_8));
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+    
+    /**
+     * Saves information from temporary pipe file to the command result file
+     */
+    public void saveCommandResult() {
+        try (InputStream fileInputStream = FileUtils.getFileAsStream(pipeResultPath);
+             FileOutputStream fileOutputStream = new FileOutputStream(result.toFile())) {
+            int byteRead = fileInputStream.read();
+            while (byteRead != -1) {
+                fileOutputStream.write(byteRead);
+                byteRead = fileInputStream.read();
+            }
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -41,7 +69,7 @@ public class CommandResultSaver {
     /**
      * Deletes all content from file with results of command execution
      *
-     * @throws IOException if can't get access to file
+     * @throws IOException if process can't get access to file
      */
     public void clearCommandResult() throws IOException {
         if (result != null) {
@@ -58,6 +86,7 @@ public class CommandResultSaver {
      * false - otherwise
      */
     public boolean deleteCommandResult() {
-        return result != null && result.toFile().delete();
+        return result != null && result.toFile().delete()
+                && pipeResult != null && pipeResult.toFile().delete();
     }
 }

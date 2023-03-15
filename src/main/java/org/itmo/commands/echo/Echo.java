@@ -4,6 +4,7 @@ import org.itmo.commands.Command;
 import org.itmo.utils.CommandInfo;
 import org.itmo.utils.CommandResultSaver;
 
+import java.io.InputStream;
 import java.util.List;
 import java.util.Objects;
 
@@ -32,6 +33,11 @@ public class Echo implements Command {
                     s + (!Objects.equals(s, output.get(output.size() - 1)) ? " " : ""),
                     false));
         }
+    }
+    
+    @Override
+    public void execute(InputStream stream) throws Exception {
+    
     }
     
     @Override

@@ -4,6 +4,7 @@ import org.itmo.commands.Command;
 import org.itmo.utils.CommandResultSaver;
 
 import java.io.IOException;
+import java.io.InputStream;
 
 /**
  * EXIT command to exit from the cli
@@ -20,6 +21,11 @@ public class Exit implements Command {
         if (!CommandResultSaver.deleteCommandResult()) {
             throw new IOException("Can't delete temporary file");
         }
+    }
+    
+    @Override
+    public void execute(InputStream stream) throws Exception {
+    
     }
     
     @Override

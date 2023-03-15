@@ -52,7 +52,7 @@ public class WcTests {
         CommandInfo commandInfo = new CommandInfo("wc", List.of("-h"), Collections.emptyList());
         
         Wc wc = new Wc(commandInfo);
-        assertDoesNotThrow(wc::execute);
+        assertDoesNotThrow(() -> wc.execute());
         
         String actual = loadResult();
         assertEquals(expected, actual);
@@ -67,7 +67,7 @@ public class WcTests {
         InputStream forTests = new ByteArrayInputStream((test + "\n").getBytes());
         System.setIn(forTests);
         Wc wc = new Wc(info);
-        assertDoesNotThrow(wc::execute);
+        assertDoesNotThrow(() -> wc.execute());
         String actual = loadResult();
         assertEquals(expected, actual);
     }
@@ -82,7 +82,7 @@ public class WcTests {
                 + "\t8\t\t33\t\t189\t\ttotal";
         
         Wc wc = new Wc(info);
-        assertDoesNotThrow(wc::execute);
+        assertDoesNotThrow(() -> wc.execute());
         
         String actual = loadResult();
         assertEquals(expected, actual);
@@ -95,7 +95,7 @@ public class WcTests {
         String expected = "\t84\t\t" + file1;
         
         Wc wc = new Wc(info);
-        assertDoesNotThrow(wc::execute);
+        assertDoesNotThrow(() -> wc.execute());
         
         String actual = loadResult();
         assertEquals(expected, actual);
@@ -108,7 +108,7 @@ public class WcTests {
         String expected = "\t4\t\t84\t\t" + file1;
         
         Wc wc = new Wc(info);
-        assertDoesNotThrow(wc::execute);
+        assertDoesNotThrow(() -> wc.execute());
         
         String actual = loadResult();
         assertEquals(expected, actual);

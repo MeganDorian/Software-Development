@@ -39,6 +39,9 @@ public class Executor {
                 for (CommandInfo command : allCommands) {
                     switch (command.getCommandName()) {
                         case "cat": {
+                            if (command.getParams().isEmpty()) {
+                                command.addParams(CommandResultSaver.getResultPath());
+                            }
                             Cat cat = new Cat(command);
                             cat.execute();
                             break;
@@ -69,6 +72,7 @@ public class Executor {
                             break;
                         }
                     }
+                    CommandResultSaver.saveCommandResult();
                 }
             } catch (CatFileNotFoundException | WcFileNotFoundException | ExternalException e) {
                 System.out.println(e.getMessage());

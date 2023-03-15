@@ -5,6 +5,8 @@ import lombok.experimental.UtilityClass;
 import java.io.*;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -44,9 +46,25 @@ public class FileUtils {
      * @return stream with content of loaded file
      */
     public InputStream getFileFromResource(String fileName) {
-        InputStream stream = ResourcesLoader.class.getClassLoader().getResourceAsStream(fileName);
+        InputStream stream = FileUtils.class.getClassLoader().getResourceAsStream(fileName);
         if (stream == null) {
             throw new IllegalArgumentException("File not found: " + fileName);
+        }
+        return stream;
+    }
+    
+    /**
+     * Get InputStream of the file
+     *
+     * @param path absolute path to the file
+     * @return InputStream of the file
+     */
+    public InputStream getFileAsStream(String path) {
+        InputStream stream;
+        try {
+            stream = Files.newInputStream(Path.of(path));
+        } catch (IOException e) {
+            throw new IllegalArgumentException("File not found: " + path);
         }
         return stream;
     }

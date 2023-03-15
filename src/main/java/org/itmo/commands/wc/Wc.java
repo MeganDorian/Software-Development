@@ -6,10 +6,7 @@ import org.itmo.exceptions.WcFileNotFoundException;
 import org.itmo.modules.Reader;
 import org.itmo.utils.*;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
-import java.io.IOException;
+import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -78,6 +75,11 @@ public class Wc implements Command {
                 }
             }
         }
+    }
+    
+    @Override
+    public void execute(InputStream stream) throws Exception {
+    
     }
     
     private void write(boolean l, boolean w, boolean b,

@@ -5,5 +5,6 @@ public enum Commands {
     wc,
     pwd,
     echo,
-    exit
+    exit,
+    external
 }

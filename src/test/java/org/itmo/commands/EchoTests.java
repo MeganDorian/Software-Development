@@ -12,6 +12,7 @@ import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 
+import static org.itmo.commands.Commands.echo;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -33,13 +34,13 @@ public class EchoTests {
     
     @Test
     public void shouldPrintValues() {
-        CommandInfo info = new CommandInfo("echo", Collections.emptyList(), List.of("Obi", "Wan", "Kenobi"));
+        CommandInfo info = new CommandInfo(echo, Collections.emptyList(), List.of("Obi", "Wan", "Kenobi"));
         checkResult("Obi Wan Kenobi", info);
     }
     
     @Test
     public void shouldPrintEmptyString() {
-        CommandInfo info = new CommandInfo("echo", Collections.emptyList(), Collections.emptyList());
+        CommandInfo info = new CommandInfo(echo, Collections.emptyList(), Collections.emptyList());
         checkResult("", info);
     }
     

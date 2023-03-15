@@ -1,5 +1,6 @@
 package org.itmo.modules;
 
+import org.itmo.commands.Commands;
 import org.itmo.utils.CommandInfo;
 
 import java.util.ArrayList;
@@ -58,7 +59,7 @@ public class Parser {
     }
     
     /**
-     *
+     * TODO add description
      * @param line
      * @param indexOfQuotes
      * @param typeOfQuotes
@@ -76,7 +77,7 @@ public class Parser {
     }
     
     /**
-     *
+     * TODO add description
      * @param forSearch
      * @param symbol
      * @param line
@@ -229,7 +230,7 @@ public class Parser {
                         && doubleQuotesIndexes.second > singleQuotesIndexes.second) {
                     substitution = doubleQuotesProcess(line.substring(doubleQuotesIndexes.first + 1, doubleQuotesIndexes.second - 1));
                     // discount all single quotes within double quotes
-                    quotesFlags.first = quotesFlags.first = findQuotes(line, singleQuotesIndexes, '\'', doubleQuotesIndexes.second);;
+                    quotesFlags.first = findQuotes(line, singleQuotesIndexes, '\'', doubleQuotesIndexes.second);
                 } else if ((singleQuotesIndexes.first < doubleQuotesIndexes.first
                         && singleQuotesIndexes.second > doubleQuotesIndexes.second) /* ' " " ' situation */
                         ||
@@ -327,7 +328,7 @@ public class Parser {
             } else {
                 int index = parsedCommand.indexOf(" ");
                 if (index == -1) {
-                    commands.add(new CommandInfo(parsedCommand, new ArrayList<>(), new ArrayList<>()));
+                    commands.add(new CommandInfo(Commands.valueOf(parsedCommand), new ArrayList<>(), new ArrayList<>()));
                 } else {
                     String name = parsedCommand.substring(0, index);
                     List<String> flags = new ArrayList<>();
@@ -356,10 +357,12 @@ public class Parser {
                                 }
                             }
                         }
+                        commands.add(new CommandInfo(Commands.valueOf(name), flags, param));
                     } else {
                         param.add(newLine);
+                        flags.add(name);
+                        commands.add(new CommandInfo(Commands.valueOf("external"), flags, param));
                     }
-                    commands.add(new CommandInfo(name, flags, param));
                 }
             }
             

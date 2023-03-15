@@ -11,6 +11,7 @@ import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -27,9 +28,9 @@ public class ExternalTests {
     @Test
     public void runExternalCommand() throws ExternalException {
         if (System.getProperty("os.name").toLowerCase().startsWith("windows")) {
-            external = new External(new CommandInfo("cd", new ArrayList<>(), new ArrayList<>()));
+            external = new External(new CommandInfo(Commands.external, List.of("cd"), new ArrayList<>()));
         } else {
-            external = new External(new CommandInfo("pwd", new ArrayList<>(), new ArrayList<>()));
+            external = new External(new CommandInfo(Commands.external, List.of("pwd"), new ArrayList<>()));
         }
         external.execute();
         CommandResultSaver.saveCommandResult();
@@ -39,7 +40,7 @@ public class ExternalTests {
     
     @Test
     public void errorExternalCommand() {
-        external = new External(new CommandInfo("someCommand", new ArrayList<>(), new ArrayList<>()));
+        external = new External(new CommandInfo(Commands.external, List.of("someCommand"), new ArrayList<>()));
         assertThrows(ExternalException.class, () -> external.execute());
     }
     

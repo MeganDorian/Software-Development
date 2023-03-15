@@ -17,6 +17,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
+import static org.itmo.commands.Commands.wc;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -49,10 +50,10 @@ public class WcTests {
                 "  -l                - print the newline counts" +
                 "  -w                - print the word counts" +
                 "  --h, --help       - display this help and exit";
-        CommandInfo commandInfo = new CommandInfo("wc", List.of("-h"), Collections.emptyList());
+        CommandInfo commandInfo = new CommandInfo(wc, List.of("-h"), Collections.emptyList());
         
         Wc wc = new Wc(commandInfo);
-        assertDoesNotThrow(() -> wc.execute());
+        assertDoesNotThrow(wc::execute);
         
         String actual = loadResult();
         assertEquals(expected, actual);
@@ -61,13 +62,13 @@ public class WcTests {
     
     @Test
     public void shouldCountFromInputStream() {
-        CommandInfo info = new CommandInfo("wc", Collections.emptyList(), Collections.emptyList());
+        CommandInfo info = new CommandInfo(wc, Collections.emptyList(), Collections.emptyList());
         String test = "test df 1 g; asdsf ddd ";
         String expected = "\t1\t\t6\t\t22";
         InputStream forTests = new ByteArrayInputStream((test + "\n").getBytes());
         System.setIn(forTests);
         Wc wc = new Wc(info);
-        assertDoesNotThrow(() -> wc.execute());
+        assertDoesNotThrow(wc::execute);
         String actual = loadResult();
         assertEquals(expected, actual);
     }
@@ -76,13 +77,13 @@ public class WcTests {
     public void shouldCountWithoutFlags() throws URISyntaxException {
         String file1 = getFilePath("wc/wc1");
         String file2 = getFilePath("wc/wc2");
-        CommandInfo info = new CommandInfo("wc", Collections.emptyList(), List.of(file1, file2));
+        CommandInfo info = new CommandInfo(wc, Collections.emptyList(), List.of(file1, file2));
         String expected = "\t4\t\t16\t\t84\t\t" + file1
                 + "\t4\t\t17\t\t105\t\t" + file2
                 + "\t8\t\t33\t\t189\t\ttotal";
         
         Wc wc = new Wc(info);
-        assertDoesNotThrow(() -> wc.execute());
+        assertDoesNotThrow(wc::execute);
         
         String actual = loadResult();
         assertEquals(expected, actual);
@@ -91,11 +92,11 @@ public class WcTests {
     @Test
     public void shouldCountWithOneFlag() throws URISyntaxException {
         String file1 = getFilePath("wc/wc1");
-        CommandInfo info = new CommandInfo("wc", List.of("-c"), List.of(file1));
+        CommandInfo info = new CommandInfo(wc, List.of("-c"), List.of(file1));
         String expected = "\t84\t\t" + file1;
         
         Wc wc = new Wc(info);
-        assertDoesNotThrow(() -> wc.execute());
+        assertDoesNotThrow(wc::execute);
         
         String actual = loadResult();
         assertEquals(expected, actual);
@@ -104,11 +105,11 @@ public class WcTests {
     @Test
     public void shouldCountWithTwoFlag() throws URISyntaxException {
         String file1 = getFilePath("wc/wc1");
-        CommandInfo info = new CommandInfo("wc", List.of("-c", "-l"), List.of(file1));
+        CommandInfo info = new CommandInfo(wc, List.of("-c", "-l"), List.of(file1));
         String expected = "\t4\t\t84\t\t" + file1;
         
         Wc wc = new Wc(info);
-        assertDoesNotThrow(() -> wc.execute());
+        assertDoesNotThrow(wc::execute);
         
         String actual = loadResult();
         assertEquals(expected, actual);

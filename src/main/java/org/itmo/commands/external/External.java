@@ -16,11 +16,11 @@ public class External implements Command {
     
     private final List<String> params;
     
-    boolean isWindows;
+    private final boolean isWindows;
     
     public External(CommandInfo commandInfo) {
         isWindows = System.getProperty("os.name").toLowerCase().startsWith("windows");
-        name = commandInfo.getCommandName();
+        name = commandInfo.getFlags().get(0);
         params = commandInfo.getParams();
     }
     

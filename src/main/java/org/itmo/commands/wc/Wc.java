@@ -4,9 +4,14 @@ import org.itmo.commands.Command;
 import org.itmo.commands.Commands;
 import org.itmo.exceptions.WcFileNotFoundException;
 import org.itmo.modules.Reader;
-import org.itmo.utils.*;
+import org.itmo.utils.CommandInfo;
+import org.itmo.utils.CommandResultSaver;
+import org.itmo.utils.ResourcesLoader;
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -17,7 +22,7 @@ import java.util.Optional;
  * WC command to count
  */
 public class Wc implements Command {
-    private List<WcFlags> flags;
+    private final List<WcFlags> flags;
     private final List<String> params;
     
     public Wc(CommandInfo commandInfo) {
@@ -77,11 +82,6 @@ public class Wc implements Command {
         }
     }
     
-    @Override
-    public void execute(InputStream stream) throws Exception {
-    
-    }
-    
     private void write(boolean l, boolean w, boolean b,
                        long lineCount, long wordsCount, long byteCount,
                        String filename, StringBuilder result) {
@@ -104,17 +104,14 @@ public class Wc implements Command {
         }
         Optional<String> file = Optional.ofNullable(filename);
         file.ifPresent(v -> result.append("\t\t").append(v));
-        CommandResultSaver.saveCommandResult(result.toString(), true);
+        CommandResultSaver.savePipeCommandResult(result.toString());
     }
     
     @Override
     public boolean printHelp() {
         if (!flags.isEmpty() && (flags.contains(WcFlags.HELP) || flags.contains(WcFlags.H))) {
-            FileInfo helpInfo = FileUtils.getFileInfo(ResourcesLoader.getProperty(Commands.wc + ".help"), true);
-            while (helpInfo.getPosition() < helpInfo.getFileSize()) {
-                Optional<String> line = FileUtils.loadLineFromFile(helpInfo);
-                line.ifPresent(l -> CommandResultSaver.saveCommandResult(l, true));
-            }
+            String helpFileName = ResourcesLoader.getProperty(Commands.wc + ".help");
+            CommandResultSaver.saveFullPipeCommandResult(helpFileName);
             return true;
         }
         return false;

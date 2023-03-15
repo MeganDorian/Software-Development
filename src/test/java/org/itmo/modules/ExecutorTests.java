@@ -4,17 +4,16 @@ import org.itmo.utils.CommandInfo;
 import org.itmo.utils.CommandResultSaver;
 import org.itmo.utils.FileInfo;
 import org.itmo.utils.FileUtils;
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Stream;
 
+import static org.itmo.commands.Commands.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class ExecutorTests {
@@ -38,14 +37,14 @@ public class ExecutorTests {
     public static Stream<? extends Arguments> forRunAllCommandsTest() {
         return Stream.of(
                 Arguments.of(
-                        List.of(new CommandInfo("echo", Collections.emptyList(), List.of("some string"))),
+                        List.of(new CommandInfo(echo, Collections.emptyList(), List.of("some string"))),
                         "some string"),
                 Arguments.of(
-                        List.of(new CommandInfo("cat", Collections.emptyList(), List.of("some text")),
-                                new CommandInfo("wc", Collections.emptyList(), Collections.emptyList())),
+                        List.of(new CommandInfo(cat, Collections.emptyList(), List.of("some text")),
+                                new CommandInfo(wc, Collections.emptyList(), Collections.emptyList())),
                         ""),
-                Arguments.of(List.of(new CommandInfo("echo", Collections.emptyList(), List.of("text")),
-                                new CommandInfo("echo", Collections.emptyList(), Collections.emptyList())),
+                Arguments.of(List.of(new CommandInfo(echo, Collections.emptyList(), List.of("text")),
+                                new CommandInfo(echo, Collections.emptyList(), Collections.emptyList())),
                         "text")
         );
     }

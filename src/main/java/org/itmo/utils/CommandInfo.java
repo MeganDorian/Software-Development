@@ -2,13 +2,14 @@ package org.itmo.utils;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import org.itmo.commands.Commands;
 
 import java.util.List;
 
 @Getter
 @AllArgsConstructor
 public class CommandInfo {
-    private final String commandName;
+    private final Commands commandName;
     
     private final List<String> flags;
     

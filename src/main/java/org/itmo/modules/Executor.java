@@ -38,7 +38,7 @@ public class Executor {
             try {
                 for (CommandInfo command : allCommands) {
                     switch (command.getCommandName()) {
-                        case "cat": {
+                        case cat: {
                             if (command.getParams().isEmpty()) {
                                 command.addParams(CommandResultSaver.getResultPath());
                             }
@@ -46,22 +46,22 @@ public class Executor {
                             cat.execute();
                             break;
                         }
-                        case "echo": {
+                        case echo: {
                             Echo echo = new Echo(command);
                             echo.execute();
                             break;
                         }
-                        case "exit": {
+                        case exit: {
                             Exit exit = new Exit();
                             exit.execute();
                             return false;
                         }
-                        case "pwd": {
+                        case pwd: {
                             Pwd pwd = new Pwd(command);
                             pwd.execute();
                             break;
                         }
-                        case "wc": {
+                        case wc: {
                             Wc wc = new Wc(command);
                             wc.execute();
                             break;

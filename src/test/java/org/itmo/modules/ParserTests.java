@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Stream;
 
+import static org.itmo.commands.Commands.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class ParserTests {
@@ -17,16 +18,16 @@ public class ParserTests {
     
     static Stream<? extends Arguments> commands() {
         return Stream.of(
-                Arguments.of(List.of("echo sffslk"), new CommandInfo("echo",
+                Arguments.of(List.of("echo sffslk"), new CommandInfo(echo,
                         new ArrayList<>(),
                         List.of("sffslk"))),
-                Arguments.of(List.of("cat -h smth"), new CommandInfo("cat",
+                Arguments.of(List.of("cat -h smth"), new CommandInfo(cat,
                         List.of("-h"),
                         List.of("smth"))),
-                Arguments.of(List.of("someCommand"), new CommandInfo("someCommand",
-                        new ArrayList<>(),
+                Arguments.of(List.of("someCommand"), new CommandInfo(external,
+                        List.of("someCommand"),
                         new ArrayList<>())),
-                Arguments.of(List.of("cat --E some.txt get.txt"), new CommandInfo("cat",
+                Arguments.of(List.of("cat --E some.txt get.txt"), new CommandInfo(cat,
                         List.of("--E"),
                         List.of("some.txt", "get.txt")))
         );

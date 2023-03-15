@@ -44,7 +44,7 @@ public class CatTests {
     
     @Test
     public void shouldReadFromInputStream() {
-        CommandInfo info = new CommandInfo("cat", Collections.emptyList(),
+        CommandInfo info = new CommandInfo(Commands.cat, Collections.emptyList(),
                 List.of(CommandResultSaver.getResultPath()));
         String expected = "test";
         InputStream forTests = new ByteArrayInputStream((expected + "\n").getBytes());
@@ -55,7 +55,7 @@ public class CatTests {
     @Test
     public void shouldPrintHelp() {
         String expected = "Usage: cat [OPTION]... [FILE]..." + "Concatenate FILE(s) to standard output.With no FILE read standard input.    " + "-e              - display $ at end of each line    " + "-n              - number all output lines    " + "--h, --help     - display this help and exit";
-        CommandInfo info = new CommandInfo("cat", List.of("--help"), Collections.emptyList());
+        CommandInfo info = new CommandInfo(Commands.cat, List.of("--help"), Collections.emptyList());
         checkResult(expected, info);
     }
     
@@ -67,7 +67,7 @@ public class CatTests {
         String expected = FileUtils.loadFullContent(file).replaceAll("\r", "").replaceAll("\n", "");
         expected += FileUtils.loadFullContent(file2).replaceAll("\r", "").replaceAll("\n", "");
         
-        CommandInfo info = new CommandInfo("cat", Collections.emptyList(), List.of(file.getAbsolutePath(), file2.getAbsolutePath()));
+        CommandInfo info = new CommandInfo(Commands.cat, Collections.emptyList(), List.of(file.getAbsolutePath(), file2.getAbsolutePath()));
         checkResult(expected, info);
     }
     
@@ -86,13 +86,13 @@ public class CatTests {
         String expected = content + "$";
         
         
-        CommandInfo info = new CommandInfo("cat", List.of("-e", "-n"), List.of(file.getAbsolutePath()));
+        CommandInfo info = new CommandInfo(Commands.cat, List.of("-e", "-n"), List.of(file.getAbsolutePath()));
         checkResult(expected, info);
     }
     
     @Test
     public void shouldThrowFileNotFoundException() {
-        CommandInfo info = new CommandInfo("cat", List.of("-e", "-n"), List.of("hello there"));
+        CommandInfo info = new CommandInfo(Commands.cat, List.of("-e", "-n"), List.of("hello there"));
         Cat cat = new Cat(info);
         assertThrows(CatFileNotFoundException.class, cat::execute);
     }

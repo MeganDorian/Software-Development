@@ -12,6 +12,7 @@ import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 
+import static org.itmo.commands.Commands.pwd;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -34,7 +35,7 @@ public class PwdTests {
     
     @Test
     public void shouldGetCurrentWorkingDirectory() {
-        CommandInfo commandInfo = new CommandInfo("pwd", Collections.emptyList(), Collections.emptyList());
+        CommandInfo commandInfo = new CommandInfo(pwd, Collections.emptyList(), Collections.emptyList());
         checkResult(System.getProperty("user.dir"), commandInfo);
     }
     
@@ -44,7 +45,7 @@ public class PwdTests {
                 "    Print the name of the current working directory." +
                 "    Options:" +
                 "      --help    - display this help and exit";
-        CommandInfo commandInfo = new CommandInfo("pwd", List.of("--help"), Collections.emptyList());
+        CommandInfo commandInfo = new CommandInfo(pwd, List.of("--help"), Collections.emptyList());
         checkResult(expected, commandInfo);
     }
     

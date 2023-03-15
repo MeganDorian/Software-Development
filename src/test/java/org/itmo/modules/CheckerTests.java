@@ -30,24 +30,6 @@ public class CheckerTests {
         assertThrows(FlagNotFoundException.class, () -> checker.checkCommand(commands));
     }
     
-    @ParameterizedTest
-    @MethodSource("forCheckInternalCommandsWithoutFlags")
-    public void checkInternalCommandsWithoutFlags(List<CommandInfo> commands) {
-        assertDoesNotThrow(() -> checker.checkCommand(commands));
-    }
-    
-    @ParameterizedTest
-    @MethodSource("forCheckCommandIsInternal")
-    public void checkCommandIsInternal(String nameCommand) {
-        assertTrue(Checker.checkCommandIsInternal(nameCommand));
-    }
-    
-    @ParameterizedTest
-    @MethodSource("forCheckCommandIsExternal")
-    public void checkCommandIsExternal(String nameCommand) {
-        assertFalse(Checker.checkCommandIsInternal(nameCommand));
-    }
-    
     public static Stream<? extends Arguments> forCheckForNotExistsFlagsAllCommands() {
         return Stream.of(Arguments.of(
                         List.of(new CommandInfo(cat, List.of("-er"), new ArrayList<>()))),
@@ -57,9 +39,21 @@ public class CheckerTests {
         );
     }
     
+    @ParameterizedTest
+    @MethodSource("forCheckInternalCommandsWithoutFlags")
+    public void checkInternalCommandsWithoutFlags(List<CommandInfo> commands) {
+        assertDoesNotThrow(() -> checker.checkCommand(commands));
+    }
+    
     public static Stream<? extends Arguments> forCheckInternalCommandsWithoutFlags() {
         return Stream.of(Arguments.of(List.of(new CommandInfo(echo, new ArrayList<>(), new ArrayList<>()),
                 new CommandInfo(exit, new ArrayList<>(), new ArrayList<>()))));
+    }
+    
+    @ParameterizedTest
+    @MethodSource("forCheckCommandIsInternal")
+    public void checkCommandIsInternal(String nameCommand) {
+        assertTrue(Checker.checkCommandIsInternal(nameCommand));
     }
     
     public static Stream<? extends Arguments> forCheckCommandIsInternal() {
@@ -68,6 +62,12 @@ public class CheckerTests {
                 Arguments.of("exit"),
                 Arguments.of("pwd"),
                 Arguments.of("wc"));
+    }
+    
+    @ParameterizedTest
+    @MethodSource("forCheckCommandIsExternal")
+    public void checkCommandIsExternal(String nameCommand) {
+        assertFalse(Checker.checkCommandIsInternal(nameCommand));
     }
     
     public static Stream<? extends Arguments> forCheckCommandIsExternal() {

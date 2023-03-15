@@ -62,6 +62,9 @@ public class Executor {
                             break;
                         }
                         case wc: {
+                            if (command.getParams().isEmpty()) {
+                                command.addParams(CommandResultSaver.getResultPath());
+                            }
                             Wc wc = new Wc(command);
                             wc.execute();
                             break;

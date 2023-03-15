@@ -2,7 +2,6 @@ package org.itmo.modules;
 
 import org.itmo.utils.CommandInfo;
 import org.itmo.utils.CommandResultSaver;
-import org.itmo.utils.FileInfo;
 import org.itmo.utils.FileUtils;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -10,7 +9,6 @@ import org.junit.jupiter.params.provider.MethodSource;
 
 import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Stream;
 
 import static org.itmo.commands.Commands.*;
@@ -18,20 +16,14 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class ExecutorTests {
     
-    Executor executor = new Executor();
+    private final Executor executor = new Executor();
     
     @ParameterizedTest
     @MethodSource("forRunAllCommandsTest")
-    public void runAllCommandsTest(List<CommandInfo> allCommands, String result) {
+    public void runAllCommandsTest(List<CommandInfo> allCommands, String expected) {
         executor.run(allCommands);
-        FileInfo fInfo = FileUtils.getFileInfo(CommandResultSaver.getResult().toFile().getPath(), false);
-        Optional<String> line = FileUtils.loadLineFromFile(fInfo);
-        StringBuilder actual = new StringBuilder();
-        while (line.isPresent()) {
-            actual.append(line.get());
-            line = FileUtils.loadLineFromFile(fInfo);
-        }
-        assertEquals(result, actual.toString());
+        String actual = FileUtils.loadFullContent(CommandResultSaver.getResult().toFile());
+        assertEquals(expected, actual);
     }
     
     public static Stream<? extends Arguments> forRunAllCommandsTest() {
@@ -45,7 +37,7 @@ public class ExecutorTests {
                         ""),
                 Arguments.of(List.of(new CommandInfo(echo, Collections.emptyList(), List.of("text")),
                                 new CommandInfo(echo, Collections.emptyList(), Collections.emptyList())),
-                        "text")
+                        "\n")
         );
     }
     

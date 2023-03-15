@@ -2,6 +2,7 @@ package org.itmo.modules;
 
 import org.itmo.commands.Commands;
 import org.itmo.utils.CommandInfo;
+import org.itmo.utils.Pair;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -37,16 +38,6 @@ public class Parser {
      */
     private final Pair<Integer> toSearchIndexes;
     
-    private static class Pair<T> {
-        private T first;
-        private T second;
-        
-        Pair(T first, T second) {
-            this.first = first;
-            this.second = second;
-        }
-    }
-    
     public Parser() {
         localStorage = new LocalStorage();
         variables = Pattern.compile("\\$+[^$ ]+ *");
@@ -60,6 +51,7 @@ public class Parser {
     
     /**
      * TODO add description
+     *
      * @param line
      * @param indexOfQuotes
      * @param typeOfQuotes
@@ -78,12 +70,13 @@ public class Parser {
     
     /**
      * TODO add description
+     *
      * @param forSearch
      * @param symbol
      * @param line
      * @return
      */
-    public boolean searchFirstNoEscapedCharacter (Pair<Integer> forSearch, char symbol, String line) {
+    public boolean searchFirstNoEscapedCharacter(Pair<Integer> forSearch, char symbol, String line) {
         boolean isFind;
         do {
             forSearch.first = forSearch.second + 1;
@@ -328,7 +321,11 @@ public class Parser {
             } else {
                 int index = parsedCommand.indexOf(" ");
                 if (index == -1) {
-                    commands.add(new CommandInfo(Commands.valueOf(parsedCommand), new ArrayList<>(), new ArrayList<>()));
+                    if (Checker.checkCommandIsInternal(parsedCommand)) {
+                        commands.add(new CommandInfo(Commands.valueOf(parsedCommand), new ArrayList<>(), new ArrayList<>()));
+                    } else {
+                        commands.add(new CommandInfo(Commands.valueOf("external"), List.of(parsedCommand),  new ArrayList<>()));
+                    }
                 } else {
                     String name = parsedCommand.substring(0, index);
                     List<String> flags = new ArrayList<>();

@@ -4,7 +4,6 @@ import org.itmo.commands.cat.Cat;
 import org.itmo.exceptions.CatFileNotFoundException;
 import org.itmo.utils.CommandInfo;
 import org.itmo.utils.CommandResultSaver;
-import org.itmo.utils.FileInfo;
 import org.itmo.utils.FileUtils;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -37,7 +36,6 @@ public class CatTests {
     
     private void checkResult(String expected, CommandInfo info) {
         Cat cat = new Cat(info);
-        CommandResultSaver.saveCommandResult();
         assertDoesNotThrow(cat::execute);
         CommandResultSaver.saveCommandResult();
         String actual = loadResult();
@@ -76,8 +74,6 @@ public class CatTests {
     @Test
     public void shouldGetFileContentWithFlags() throws URISyntaxException {
         File file = new File(Objects.requireNonNull(this.getClass().getClassLoader().getResource("cat/cat3")).toURI());
-        FileInfo fileInfo = FileUtils.getFileInfo("cat/cat3", true);
-        
         int lineCount = 1;
         StringBuilder content = new StringBuilder(FileUtils.loadFullContent(file));
         content.insert(0, "\t" + lineCount + "\t\t");
@@ -87,7 +83,7 @@ public class CatTests {
             content.replace(nextPosToReplace, nextPosToReplace + 2, "$\t" + lineCount + "\t\t");
             nextPosToReplace = content.indexOf("\r\n");
         }
-        String expected = content.toString() + "$";
+        String expected = content + "$";
         
         
         CommandInfo info = new CommandInfo("cat", List.of("-e", "-n"), List.of(file.getAbsolutePath()));

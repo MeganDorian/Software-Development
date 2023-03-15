@@ -2,18 +2,18 @@ package org.itmo.commands.pwd;
 
 import org.itmo.commands.Command;
 import org.itmo.commands.Commands;
-import org.itmo.utils.*;
+import org.itmo.utils.CommandInfo;
+import org.itmo.utils.CommandResultSaver;
+import org.itmo.utils.ResourcesLoader;
 
-import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 /**
  * PWD command to print current directory
  */
 public class Pwd implements Command {
-    private List<PwdFlags> flags;
+    private final List<PwdFlags> flags;
     
     public Pwd(CommandInfo commandInfo) {
         flags = new ArrayList<>();
@@ -23,24 +23,15 @@ public class Pwd implements Command {
     @Override
     public void execute() {
         if (!printHelp()) {
-            String currentDirectory = System.getProperty("user.dir");
-            CommandResultSaver.saveCommandResult(currentDirectory, false);
+            CommandResultSaver.savePipeCommandResult(System.getProperty("user.dir"));
         }
-    }
-    
-    @Override
-    public void execute(InputStream stream) throws Exception {
-    
     }
     
     @Override
     public boolean printHelp() {
         if (!flags.isEmpty() && flags.contains(PwdFlags.HELP)) {
-            FileInfo helpInfo = FileUtils.getFileInfo(ResourcesLoader.getProperty(Commands.pwd + ".help"), true);
-            while (helpInfo.getPosition() < helpInfo.getFileSize()) {
-                Optional<String> line = FileUtils.loadLineFromFile(helpInfo);
-                line.ifPresent(l -> CommandResultSaver.saveCommandResult(l, true));
-            }
+            String helpFileName = ResourcesLoader.getProperty(Commands.pwd + ".help");
+            CommandResultSaver.saveFullPipeCommandResult(helpFileName);
             return true;
         }
         return false;

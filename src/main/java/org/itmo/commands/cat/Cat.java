@@ -13,6 +13,7 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -44,9 +45,12 @@ public class Cat implements Command {
                 if (!file.exists() || !file.isFile()) {
                     throw new CatFileNotFoundException("Cat command did not found file with name " + fileName);
                 }
-                try (BufferedReader reader = new BufferedReader(new InputStreamReader(FileUtils.getFileAsStream(fileName)))) {
+                
+                try (BufferedReader reader = new BufferedReader(
+                        new InputStreamReader(FileUtils.getFileAsStream(fileName), StandardCharsets.UTF_8))) {
                     StringBuilder line = new StringBuilder();
                     String l = reader.readLine();
+                    // if no temporary result in pipeResultFile, reads system input stream
                     if (l == null && fileName.equals(CommandResultSaver.getResultPath())) {
                         if (flags.contains(CatFlags.N)) {
                             line.append("\t").append(1).append("\t\t");
@@ -67,7 +71,7 @@ public class Cat implements Command {
                         if (flags.contains(CatFlags.E)) {
                             line.append("$");
                         }
-                        CommandResultSaver.savePipeCommandResult(line.toString() + "\n");
+                        CommandResultSaver.savePipeCommandResult(line + "\n");
                         line.delete(0, line.length());
                         l = reader.readLine();
                     }
@@ -82,15 +86,7 @@ public class Cat implements Command {
     public boolean printHelp() {
         if (!flags.isEmpty() && (flags.contains(CatFlags.HELP) || flags.contains(CatFlags.H))) {
             String helpFileName = ResourcesLoader.getProperty(Commands.cat + ".help");
-            try (BufferedReader reader = new BufferedReader(new InputStreamReader(FileUtils.getFileFromResource(helpFileName)))) {
-                String line = reader.readLine();
-                while (line != null) {
-                    CommandResultSaver.savePipeCommandResult(line);
-                    line = reader.readLine();
-                }
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
+            CommandResultSaver.saveFullPipeCommandResult(helpFileName);
             return true;
         }
         return false;

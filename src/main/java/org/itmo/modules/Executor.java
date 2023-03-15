@@ -11,12 +11,12 @@ import org.itmo.exceptions.ExternalException;
 import org.itmo.exceptions.WcFileNotFoundException;
 import org.itmo.utils.CommandInfo;
 import org.itmo.utils.CommandResultSaver;
-import org.itmo.utils.FileInfo;
 import org.itmo.utils.FileUtils;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.util.List;
-import java.util.Optional;
 
 public class Executor {
     
@@ -73,6 +73,7 @@ public class Executor {
                         }
                     }
                     CommandResultSaver.saveCommandResult();
+                    CommandResultSaver.clearPipeCommandResult();
                 }
             } catch (CatFileNotFoundException | WcFileNotFoundException | ExternalException e) {
                 System.out.println(e.getMessage());
@@ -80,11 +81,13 @@ public class Executor {
                 e.printStackTrace();
                 return false;
             }
-            FileInfo fInfo = FileUtils.getFileInfo(CommandResultSaver.getResult().toFile().getPath(), false);
-            Optional<String> line = FileUtils.loadLineFromFile(fInfo);
-            while (line.isPresent()) {
-                System.out.println(line.get());
-                line = FileUtils.loadLineFromFile(fInfo);
+            
+            try (BufferedReader reader = new BufferedReader(new InputStreamReader(FileUtils.getFileAsStream(CommandResultSaver.getResultPath())))) {
+                while (reader.ready()) {
+                    System.out.println(reader.readLine());
+                }
+            } catch (IOException e) {
+                throw new RuntimeException(e);
             }
         }
         return true;

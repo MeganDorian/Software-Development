@@ -3,10 +3,7 @@ package org.itmo.utils;
 import lombok.Getter;
 import lombok.experimental.UtilityClass;
 
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.PrintWriter;
+import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -50,6 +47,19 @@ public class CommandResultSaver {
         }
     }
     
+    public void saveFullPipeCommandResult(String fileName) {
+        try (BufferedReader reader = new BufferedReader(
+                new InputStreamReader(FileUtils.getFileFromResource(fileName), StandardCharsets.UTF_8))) {
+            String line = reader.readLine();
+            while (line != null) {
+                CommandResultSaver.savePipeCommandResult(line);
+                line = reader.readLine();
+            }
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+    
     /**
      * Saves information from temporary pipe file to the command result file
      */
@@ -74,6 +84,14 @@ public class CommandResultSaver {
     public void clearCommandResult() throws IOException {
         if (result != null) {
             try (PrintWriter print = new PrintWriter(result.toFile())) {
+                print.print("");
+            }
+        }
+    }
+    
+    public void clearPipeCommandResult() throws IOException {
+        if (pipeResult != null) {
+            try (PrintWriter print = new PrintWriter(pipeResult.toFile())) {
                 print.print("");
             }
         }

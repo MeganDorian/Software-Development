@@ -23,7 +23,7 @@ class ExitTests {
         File file = CommandResultSaver.getResult().toFile();
         
         Exit exit = new Exit();
-        assertDoesNotThrow(() -> exit.execute());
+        assertDoesNotThrow(exit::execute);
         
         assertFalse(file.exists());
     }

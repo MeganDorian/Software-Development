@@ -39,6 +39,7 @@ public class External implements Command {
             else {
                 builder.command("sh", "-c", name + " " + paramWithFlags);
             }
+            builder.redirectInput(ProcessBuilder.Redirect.INHERIT);
             Process process = builder.start();
             BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream(),
                                                                              StandardCharsets.UTF_8));

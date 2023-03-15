@@ -14,9 +14,6 @@ import java.util.regex.Pattern;
 public class Parser {
     
     private final LocalStorage localStorage;
-    
-    private final Pattern singleQuotes;
-    private final Pattern doubleQuotes;
     private final Pattern variables;
     private final Pattern variableAddition;
     private final Pattern flag;
@@ -50,8 +47,6 @@ public class Parser {
     
     public Parser() {
         localStorage = new LocalStorage();
-        singleQuotes = Pattern.compile("'[^']*'");
-        doubleQuotes = Pattern.compile("\"[^\"]*\"");
         variables = Pattern.compile("\\$+[^$ ]+ *");
         variableAddition = Pattern.compile("^[^ ]+=[^ ]*");
         flag = Pattern.compile("-{1,2}[^- ]+ *");
@@ -59,6 +54,46 @@ public class Parser {
         singleQuotesIndexes = new Pair<>(-1, -1);
         toSearchIndexes = new Pair<>(-1, -1);
         quotesFlags = new Pair<>(false, false);
+    }
+    
+    /**
+     *
+     * @param line
+     * @param indexOfQuotes
+     * @param typeOfQuotes
+     * @param startSubstring
+     * @return
+     */
+    public boolean findQuotes(String line, Pair<Integer> indexOfQuotes, char typeOfQuotes, int startSubstring) {
+        Pair<Integer> forSearch = new Pair<>(startSubstring, startSubstring - 1);
+        boolean isFindFirstQuotes = searchFirstNoEscapedCharacter(forSearch, typeOfQuotes, line);
+        indexOfQuotes.first = forSearch.second;
+        boolean isFindSecondQuotes;
+        isFindSecondQuotes = isFindFirstQuotes && searchFirstNoEscapedCharacter(forSearch, typeOfQuotes, line);
+        indexOfQuotes.second = forSearch.second + 1;
+        return isFindFirstQuotes && isFindSecondQuotes;
+    }
+    
+    /**
+     *
+     * @param forSearch
+     * @param symbol
+     * @param line
+     * @return
+     */
+    public boolean searchFirstNoEscapedCharacter (Pair<Integer> forSearch, char symbol, String line) {
+        boolean isFind;
+        do {
+            forSearch.first = forSearch.second + 1;
+            forSearch.second = line.substring(forSearch.first).indexOf(symbol);
+            if(forSearch.second != -1) {
+                forSearch.second += forSearch.first;
+                isFind = !isEscaped(line.substring(forSearch.first, forSearch.second));
+            } else {
+                isFind = true;
+            }
+        } while (!isFind);
+        return forSearch.second != -1;
     }
     
     /**
@@ -169,8 +204,6 @@ public class Parser {
      */
     public List<StringBuilder> substitutor(String line) {
         line = line.trim();
-        Matcher matcherSingleQuotes = singleQuotes.matcher(line);
-        Matcher matcherDoubleQuotes = doubleQuotes.matcher(line);
         int startSubstring = 0;
         List<StringBuilder> potentialCommands = new ArrayList<>();
         boolean isEndsWithPipe = false;
@@ -179,16 +212,12 @@ public class Parser {
             substitution = Optional.empty();
             // if double quotes are to be searched for
             if (!quotesFlags.second) {
-                quotesFlags.second = matcherDoubleQuotes.find(startSubstring);
-                doubleQuotesIndexes.first = quotesFlags.second ? matcherDoubleQuotes.start() : -1;
-                doubleQuotesIndexes.second = quotesFlags.second ? matcherDoubleQuotes.end() : -1;
+                quotesFlags.second = findQuotes(line, doubleQuotesIndexes, '\"', startSubstring);
             }
             
             //if single quotes are to be searched for
             if (!quotesFlags.first) {
-                quotesFlags.first = matcherSingleQuotes.find(startSubstring);
-                singleQuotesIndexes.first = quotesFlags.first ? matcherSingleQuotes.start() : -1;
-                singleQuotesIndexes.second = quotesFlags.first ? matcherSingleQuotes.end() : -1;
+                quotesFlags.first = findQuotes(line, singleQuotesIndexes, '\'', startSubstring);
             }
             
             // both types of quotes are found
@@ -198,7 +227,7 @@ public class Parser {
                         && doubleQuotesIndexes.second > singleQuotesIndexes.second) {
                     substitution = doubleQuotesProcess(line.substring(doubleQuotesIndexes.first + 1, doubleQuotesIndexes.second - 1));
                     // discount all single quotes within double quotes
-                    quotesFlags.first = matcherSingleQuotes.find(doubleQuotesIndexes.second);
+                    quotesFlags.first = quotesFlags.first = findQuotes(line, singleQuotesIndexes, '\'', doubleQuotesIndexes.second);;
                 } else if ((singleQuotesIndexes.first < doubleQuotesIndexes.first
                         && singleQuotesIndexes.second > doubleQuotesIndexes.second) /* ' " " ' situation */
                         ||
@@ -206,7 +235,7 @@ public class Parser {
                                 && singleQuotesIndexes.second < doubleQuotesIndexes.second)) {
                     substitution = singleQuotesProcess(line);
                     // discount all double quotes inside single quotes
-                    quotesFlags.second = matcherDoubleQuotes.find(singleQuotesIndexes.second);
+                    quotesFlags.second = findQuotes(line, doubleQuotesIndexes, '\"', singleQuotesIndexes.second);
                 }
                 // incorrect quotes
                 else {
@@ -219,7 +248,7 @@ public class Parser {
                             substitution = Optional.of(line.substring(doubleQuotesIndexes.first + 1, doubleQuotesIndexes.second - 1));
                         }
                         // discount all single quotes within double quotes
-                        quotesFlags.first = matcherSingleQuotes.find(doubleQuotesIndexes.second);
+                        quotesFlags.first = findQuotes(line, singleQuotesIndexes, '\'', doubleQuotesIndexes.second);
                         // mark that the quotes have been processed
                         quotesFlags.second = false;
                     }

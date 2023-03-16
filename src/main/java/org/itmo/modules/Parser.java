@@ -59,7 +59,7 @@ public class Parser {
      * @param startSubstring -- starting index for a search
      * @return <true> -- if an unescaped character was found, <false> -- otherwise
      */
-    public boolean findQuotes(String line, Pair<Integer> indexOfQuotes, char typeOfQuotes, int startSubstring) {
+    private boolean findQuotes(String line, Pair<Integer> indexOfQuotes, char typeOfQuotes, int startSubstring) {
         Pair<Integer> forSearch = new Pair<>(startSubstring, startSubstring - 1);
         boolean isFindFirstQuotes = searchFirstUnescapedCharacter(forSearch, typeOfQuotes, line);
         indexOfQuotes.first = forSearch.second;
@@ -85,7 +85,7 @@ public class Parser {
      *                  to the index of the unshielded character.
      *                  minus one -- the character was not found
      */
-    public boolean searchFirstUnescapedCharacter (Pair<Integer> forSearch, char symbol, String line) {
+    private boolean searchFirstUnescapedCharacter (Pair<Integer> forSearch, char symbol, String line) {
         boolean isFind;
         do {
             forSearch.first = forSearch.second + 1;

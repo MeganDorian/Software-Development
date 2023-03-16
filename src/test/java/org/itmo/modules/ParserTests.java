@@ -123,7 +123,24 @@ public class ParserTests {
                 Arguments.of(List.of("echo \\$x"), "echo \\\\\\$x"),
                 Arguments.of(List.of("echo $$x"), "echo $$x"),
                 Arguments.of(List.of("echo $$y y"), "echo $$$x $x"),
-                Arguments.of(List.of("echo y \\"), "echo $x \\\\")
+                Arguments.of(List.of("echo y \\"), "echo $x \\\\"),
+                Arguments.of(List.of("y==c"), "$x$a")
+        );
+    }
+    
+    @ParameterizedTest
+    @MethodSource("forInitialisingTest")
+    public void initialisingTest(String name, String value, String expect) {
+        parser.commandParser(parser.substitutor(name + "=" + value));
+        List<CommandInfo> commands = parser.commandParser(parser.substitutor("echo $" + name));
+        assertEquals(expect, String.join(" ", commands.get(0).getParams()));
+    }
+    
+    static Stream<? extends Arguments> forInitialisingTest() {
+        return Stream.of(
+                Arguments.of("x", "some", "some"),
+                Arguments.of("x", "\"just   a   \\\\ string\"", "just a \\\\ string"),
+                Arguments.of("x", "'some string'", "some string")
         );
     }
     

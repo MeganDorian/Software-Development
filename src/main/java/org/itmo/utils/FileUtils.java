@@ -7,7 +7,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.RandomAccessFile;
 import java.nio.file.Files;
-import java.nio.file.Path;
+import java.nio.file.Paths;
 
 /**
  * Utility class to work with files
@@ -38,7 +38,7 @@ public class FileUtils {
     public InputStream getFileAsStream(String path) {
         InputStream stream;
         try {
-            stream = Files.newInputStream(Path.of(path));
+            stream = Files.newInputStream(Paths.get(path));
         } catch (IOException e) {
             throw new IllegalArgumentException("File not found: " + path);
         }

@@ -143,6 +143,52 @@ public class Parser {
     }
     
     /**
+     * Removes the escaped backspace in front
+     * of special characters such as
+     * - '
+     * - "
+     * - $
+     * - |
+     * @param line -- processing string
+     * @return processed string
+     */
+    private String removingEscapingSlashForSpecialCharacters(String line) {
+        return line.replaceAll("\\\\'", "'")
+                .replaceAll("\\\\\"", "\"")
+                .replaceAll("\\\\\\$", "\\$")
+                .replaceAll("\\\\\\|", "|");
+    }
+    
+    /**
+     * Replaces all double backspaces
+     * with single backspaces,
+     * also handles escaping wildcards
+     *
+     * @param line -- processing string
+     * @return processed string
+     */
+    private String removeUnnecessaryBackspaces(String line) {
+        StringBuilder result = new StringBuilder();
+        int index;
+        do {
+            index = line.indexOf("\\\\");
+            if(index != -1) {
+                result.append(removingEscapingSlashForSpecialCharacters(line.substring(0, index)));
+                int indexStrartFind = index;
+                do {
+                    result.append("\\");
+                    indexStrartFind += 2;
+                } while (line.startsWith("\\\\", indexStrartFind));
+                line = line.substring(indexStrartFind);
+            }
+        } while (index != -1);
+        if(line.length() != 0) {
+            result.append(removingEscapingSlashForSpecialCharacters(line));
+        }
+        return result.toString();
+    }
+    
+    /**
      * Handling a substring before/between/after inverted quotes
      *
      * @param line -- processing string
@@ -160,9 +206,9 @@ public class Parser {
                 } else {
                     concat = replaceEvenCountOfBackslashesWithSingles(piped[i]);
                 }
-                potentialCommands.add(substitutionVariables(concat));
+                potentialCommands.add(substitutionVariables(concat, true));
             } else {
-                potentialCommands.add(substitutionVariables(piped[i]));
+                potentialCommands.add(substitutionVariables(piped[i], true));
             }
         }
         return potentialCommands;
@@ -181,7 +227,7 @@ public class Parser {
         // send everything inside the double quotes to substitute variables
         // the double quotes themselves will be deleted
         return doubleQuotesIndexes.second - doubleQuotesIndexes.first > 0 ?
-                Optional.of(String.valueOf(substitutionVariables(line))) : Optional.empty();
+                Optional.of(String.valueOf(substitutionVariables(line, false))) : Optional.empty();
     }
     
     /**
@@ -391,9 +437,13 @@ public class Parser {
      * If no variable is found, an empty string will be substituted for the default
      *
      * @param line -- substitution string
+     * @param isDoubleQuotes -- <true> -- if the substring is enclosed in double quotes,
+     *                       <false> -- otherwise
+     *                       This is necessary to understand whether
+     *                       double backspace cases need to be handled.
      * @return the line with the substitutions made
      */
-    private StringBuilder substitutionVariables(String line) {
+    private StringBuilder substitutionVariables(String line, boolean isDoubleQuotes) {
         StringBuilder result = new StringBuilder();
         int index = 0;
         Matcher matcherVariables = variables.matcher(line);
@@ -401,7 +451,12 @@ public class Parser {
             String beforeDollar = line.substring(index, matcherVariables.start());
             if (!isEscaped(beforeDollar)) {
                 // add a line before the variable
-                result.append(replaceEvenCountOfBackslashesWithSingles(beforeDollar));
+                if(isDoubleQuotes) {
+                    result.append(removeUnnecessaryBackspaces(beforeDollar));
+                }
+                else {
+                    result.append(beforeDollar);
+                }
                 String subline = line.substring(matcherVariables.start(), matcherVariables.end());
                 while (subline.startsWith("$$")) {
                     result.append("$$");
@@ -419,14 +474,23 @@ public class Parser {
                     index = line.length() - subline.length();
                 }
             } else {
-                result.append(replaceEvenCountOfBackslashesWithSingles(beforeDollar));
-                result.append(line, matcherVariables.start(), matcherVariables.end());
+                if(isDoubleQuotes) {
+                    result.append(removeUnnecessaryBackspaces(line.substring(index, matcherVariables.end())));
+                }
+                else {
+                    result.append(line.substring(index, matcherVariables.end()));
+                }
                 index = matcherVariables.end();
             }
         }
         if (line.length() - index > 0) {
             String substring = line.substring(index);
-            result.append(replaceEvenCountOfBackslashesWithSingles(substring));
+            if(isDoubleQuotes) {
+                result.append(removeUnnecessaryBackspaces(substring));
+            }
+            else {
+                result.append(substring);
+            }
         }
         return result;
     }

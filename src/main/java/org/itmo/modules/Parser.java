@@ -50,33 +50,42 @@ public class Parser {
     }
     
     /**
-     * TODO add description
-     *
-     * @param line
-     * @param indexOfQuotes
-     * @param typeOfQuotes
-     * @param startSubstring
-     * @return
+     * Searches the string for the first unescaped quotes
+     * of the predefined type starting from the specified index
+     * <p>
+     * @param line -- search string
+     * @param indexOfQuotes -- a starting index for a search
+     * @param typeOfQuotes -- a structure for finding an index
+     * @param startSubstring -- starting index for a search
+     * @return <true> -- if an unescaped character was found, <false> -- otherwise
      */
     public boolean findQuotes(String line, Pair<Integer> indexOfQuotes, char typeOfQuotes, int startSubstring) {
         Pair<Integer> forSearch = new Pair<>(startSubstring, startSubstring - 1);
-        boolean isFindFirstQuotes = searchFirstNoEscapedCharacter(forSearch, typeOfQuotes, line);
+        boolean isFindFirstQuotes = searchFirstUnescapedCharacter(forSearch, typeOfQuotes, line);
         indexOfQuotes.first = forSearch.second;
         boolean isFindSecondQuotes;
-        isFindSecondQuotes = isFindFirstQuotes && searchFirstNoEscapedCharacter(forSearch, typeOfQuotes, line);
+        isFindSecondQuotes = isFindFirstQuotes && searchFirstUnescapedCharacter(forSearch, typeOfQuotes, line);
         indexOfQuotes.second = forSearch.second + 1;
         return isFindFirstQuotes && isFindSecondQuotes;
     }
     
     /**
-     * TODO add description
-     *
-     * @param forSearch
-     * @param symbol
-     * @param line
-     * @return
+     * Searches the first unescaped transmitted character
+     * in a string starting at the specified index
+     * <p>
+     * @param forSearch -- a structure for storing and returning search indexes
+     *                  NB! the second index of the structure at the start
+     *                  will be assigned to the first index with
+     *                  the addition of one - this is the index
+     *                  from which the search will be performed
+     * @param symbol -- search symbol
+     * @param line -- search string
+     * @return <true> -- if an unshielded character was found, <false> -- otherwise
+     *                  the second index of the "forSearch" structure corresponds
+     *                  to the index of the unshielded character.
+     *                  minus one -- the character was not found
      */
-    public boolean searchFirstNoEscapedCharacter(Pair<Integer> forSearch, char symbol, String line) {
+    public boolean searchFirstUnescapedCharacter (Pair<Integer> forSearch, char symbol, String line) {
         boolean isFind;
         do {
             forSearch.first = forSearch.second + 1;
@@ -159,6 +168,11 @@ public class Parser {
         return potentialCommands;
     }
     
+    /**
+     * Processes a substring between double quotes
+     * @param line -- processing string
+     * @return processed substring
+     */
     private Optional<String> doubleQuotesProcess(String line) {
         toSearchIndexes.first = doubleQuotesIndexes.first;
         toSearchIndexes.second = doubleQuotesIndexes.second;
@@ -170,6 +184,11 @@ public class Parser {
                 Optional.of(String.valueOf(substitutionVariables(line))) : Optional.empty();
     }
     
+    /**
+     * Processes a substring between single quotes
+     * @param line -- processing string
+     * @return processed substring
+     */
     private Optional<String> singleQuotesProcess(String line) {
         toSearchIndexes.first = singleQuotesIndexes.first;
         toSearchIndexes.second = singleQuotesIndexes.second;

@@ -4,10 +4,9 @@ import org.itmo.commands.cat.Cat;
 import org.itmo.exceptions.CatFileNotFoundException;
 import org.itmo.utils.CommandInfo;
 import org.itmo.utils.CommandResultSaver;
-import org.itmo.utils.FileInfo;
 import org.itmo.utils.FileUtils;
 import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.io.*;
@@ -22,9 +21,10 @@ public class CatTests {
     static InputStream inputStream;
     static PrintStream outputStream;
     
-    @BeforeAll
-    public static void setUp() throws IOException {
+    @BeforeEach
+    public void setUp() throws IOException {
         CommandResultSaver.createCommandResultFile();
+        CommandResultSaver.savePipeCommandResult("");
         inputStream = System.in;
         outputStream = System.out;
     }
@@ -34,89 +34,71 @@ public class CatTests {
                 .replaceAll("\r", "").replaceAll("\n", "");
     }
     
+    private void checkResult(String expected, CommandInfo info) {
+        Cat cat = new Cat(info);
+        assertDoesNotThrow(cat::execute);
+        CommandResultSaver.saveCommandResult();
+        String actual = loadResult();
+        assertEquals(expected, actual);
+    }
+    
     @Test
     public void shouldReadFromInputStream() {
-        CommandInfo info = new CommandInfo("cat", Collections.emptyList(), Collections.emptyList());
+        CommandInfo info = new CommandInfo(Commands.cat, Collections.emptyList(),
+                List.of(CommandResultSaver.getResultPath()));
         String expected = "test";
         InputStream forTests = new ByteArrayInputStream((expected + "\n").getBytes());
         System.setIn(forTests);
-        Cat cat = new Cat(info);
-        assertDoesNotThrow(cat::execute);
-        String actual = loadResult();
-        assertEquals(expected, actual);
+        checkResult(expected, info);
     }
     
     @Test
     public void shouldPrintHelp() {
-        String expected = "Usage: cat [OPTION]... [FILE]..." +
-                "Concatenate FILE(s) to standard output.With no FILE read standard input.    " +
-                "-e              - display $ at end of each line    " +
-                "-n              - number all output lines    " +
-                "--h, --help     - display this help and exit";
-        CommandInfo info = new CommandInfo("cat", List.of("--help"), Collections.emptyList());
-        Cat cat = new Cat(info);
-        assertDoesNotThrow(cat::execute);
-        
-        String actual = loadResult();
-        assertEquals(expected, actual);
+        String expected = "Usage: cat [OPTION]... [FILE]..." + "Concatenate FILE(s) to standard output.With no FILE read standard input.    " + "-e              - display $ at end of each line    " + "-n              - number all output lines    " + "--h, --help     - display this help and exit";
+        CommandInfo info = new CommandInfo(Commands.cat, List.of("--help"), Collections.emptyList());
+        checkResult(expected, info);
     }
     
     @Test
     public void shouldGetFilesContent() throws URISyntaxException {
-        File file = new File(Objects.requireNonNull(
-                this.getClass().getClassLoader().getResource("cat/cat1")).toURI());
-        String expected = FileUtils.loadFullContent(file)
-                .replaceAll("\r", "").replaceAll("\n", "");
-        File file2 = new File(Objects.requireNonNull(
-                this.getClass().getClassLoader().getResource("cat/cat2")).toURI());
-        expected += FileUtils.loadFullContent(file2)
-                .replaceAll("\r", "").replaceAll("\n", "");
+        File file = new File(Objects.requireNonNull(this.getClass().getClassLoader().getResource("cat/cat1")).toURI());
+        File file2 = new File(Objects.requireNonNull(this.getClass().getClassLoader().getResource("cat/cat2")).toURI());
         
-        CommandInfo info = new CommandInfo("cat", Collections.emptyList(),
-                List.of(file.getAbsolutePath(), file2.getAbsolutePath()));
-        Cat cat = new Cat(info);
-        assertDoesNotThrow(cat::execute);
+        String expected = FileUtils.loadFullContent(file).replaceAll("\r", "").replaceAll("\n", "");
+        expected += FileUtils.loadFullContent(file2).replaceAll("\r", "").replaceAll("\n", "");
         
-        String actual = loadResult();
-        assertEquals(expected, actual);
+        CommandInfo info = new CommandInfo(Commands.cat, Collections.emptyList(), List.of(file.getAbsolutePath(), file2.getAbsolutePath()));
+        checkResult(expected, info);
     }
     
     @Test
     public void shouldGetFileContentWithFlags() throws URISyntaxException {
-        File file = new File(Objects.requireNonNull(
-                this.getClass().getClassLoader().getResource("cat/cat3")).toURI());
-        FileInfo fileInfo = FileUtils.getFileInfo("cat/cat3", true);
-        
-        StringBuilder content = new StringBuilder();
+        File file = new File(Objects.requireNonNull(this.getClass().getClassLoader().getResource("cat/cat3")).toURI());
         int lineCount = 1;
-        while (fileInfo.getPosition() < fileInfo.getFileSize()) {
-            content.append("\t").append(lineCount).append("\t\t");
-            FileUtils.loadLineFromFile(fileInfo).ifPresent(content::append);
-            content.append("$");
-            lineCount++;
+        StringBuilder content = new StringBuilder();
+        try(BufferedReader reader = new BufferedReader(new InputStreamReader(FileUtils.getFileFromResource("cat/cat3")))) {
+            while(reader.ready()) {
+                content.append("\t").append(lineCount).append("\t\t").append(reader.readLine()).append("$");
+                lineCount++;
+            }
+        } catch (IOException e) {
+            throw new RuntimeException(e);
         }
-        String expected = content.toString().replaceAll("\r", "").replaceAll("\n", "");
         
-        
-        CommandInfo info = new CommandInfo("cat", List.of("-e", "-n"),
-                List.of(file.getAbsolutePath()));
-        Cat cat = new Cat(info);
-        assertDoesNotThrow(cat::execute);
-        
-        String actual = loadResult();
-        assertEquals(expected, actual);
+        CommandInfo info = new CommandInfo(Commands.cat, List.of("-e", "-n"), List.of(file.getAbsolutePath()));
+        checkResult(content.toString(), info);
     }
     
     @Test
     public void shouldThrowFileNotFoundException() {
-        CommandInfo info = new CommandInfo("cat", List.of("-e", "-n"), List.of("fdfsdfe"));
+        CommandInfo info = new CommandInfo(Commands.cat, List.of("-e", "-n"), List.of("hello there"));
         Cat cat = new Cat(info);
         assertThrows(CatFileNotFoundException.class, cat::execute);
     }
     
     @AfterEach
-    public void cleanUp() throws IOException {
-        CommandResultSaver.clearCommandResult();
+    public void cleanUp() {
+        CommandResultSaver.deleteCommandResult();
         System.setIn(inputStream);
         System.setOut(outputStream);
     }

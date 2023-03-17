@@ -12,20 +12,19 @@ import java.util.List;
 
 public class External implements Command {
     
-    private String name;
+    private final String name;
     
-    private List<String> params;
+    private final List<String> params;
     
-    boolean isWindows;
+    private final boolean isWindows;
     
     public External(CommandInfo commandInfo) {
         isWindows = System.getProperty("os.name").toLowerCase().startsWith("windows");
-        name = commandInfo.getCommandName();
+        name = commandInfo.getFlags().get(0);
         params = commandInfo.getParams();
     }
     
     /**
-     *
      * Run users command
      */
     @Override
@@ -35,19 +34,19 @@ public class External implements Command {
             StringBuilder paramWithFlags = new StringBuilder(String.join(" ", params));
             if (isWindows) {
                 builder.command("cmd.exe", "/c", name + " " + paramWithFlags);
-            }
-            else {
+            } else {
                 builder.command("sh", "-c", name + " " + paramWithFlags);
             }
+            builder.redirectInput(ProcessBuilder.Redirect.INHERIT);
             Process process = builder.start();
             BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream(),
-                                                                             StandardCharsets.UTF_8));
+                    StandardCharsets.UTF_8));
             BufferedReader readerError = new BufferedReader(new InputStreamReader(process.getErrorStream(),
-                                                                                  StandardCharsets.UTF_8));
+                    StandardCharsets.UTF_8));
             String line;
             process.waitFor();
             while ((line = reader.readLine()) != null) {
-                CommandResultSaver.saveCommandResult(line, true);
+                CommandResultSaver.savePipeCommandResult(line);
             }
             if (process.exitValue() != 0) {
                 StringBuilder error = new StringBuilder();
@@ -62,7 +61,7 @@ public class External implements Command {
     }
     
     @Override
-    public boolean printHelp () {
+    public boolean printHelp() {
         return false;
     }
     

@@ -4,21 +4,24 @@ import org.itmo.commands.Command;
 import org.itmo.commands.Commands;
 import org.itmo.exceptions.CatFileNotFoundException;
 import org.itmo.modules.Reader;
-import org.itmo.utils.*;
+import org.itmo.utils.CommandInfo;
+import org.itmo.utils.CommandResultSaver;
+import org.itmo.utils.FileUtils;
+import org.itmo.utils.ResourcesLoader;
 
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 /**
  * CAT command to work with file contents
  */
 public class Cat implements Command {
-    private List<CatFlags> flags;
+    private final List<CatFlags> flags;
     private final List<String> params;
     
     public Cat(CommandInfo commandInfo) {
@@ -34,49 +37,46 @@ public class Cat implements Command {
      * @throws CatFileNotFoundException if parameter is not file
      */
     @Override
-    public void execute() throws CatFileNotFoundException {
+    public void execute() throws CatFileNotFoundException, IOException {
         if (!printHelp()) {
-            
-            StringBuilder line = new StringBuilder();
-            boolean addNumber = flags.contains(CatFlags.N);
-            boolean addDollarSymbol = flags.contains(CatFlags.E);
             int lineNumber = 1;
-            
-            if (params.isEmpty()) {
-                if (addNumber) {
-                    line.append("\t").append(lineNumber).append("\t\t");
+            for (String fileName : params) {
+                File file = new File(fileName);
+                if (!file.exists() || !file.isFile()) {
+                    throw new CatFileNotFoundException("Cat command did not found file with name " + fileName);
                 }
-                line.append(new Reader().readInput());
                 
-                if (addDollarSymbol) {
-                    line.append("$");
-                }
-                CommandResultSaver.saveCommandResult(line.toString(), false);
-            } else {
-                
-                for (String fileName : params) {
-                    File file = new File(fileName);
-                    if (!file.exists() || !file.isFile()) {
-                        throw new CatFileNotFoundException("Cat command did not found file with name " + fileName);
-                    }
-                    try (BufferedReader reader = new BufferedReader(new FileReader(fileName))) {
-                        String l = reader.readLine();
-                        while (l != null) {
-                            if (addNumber) {
-                                line.append("\t").append(lineNumber).append("\t\t");
-                                lineNumber++;
-                            }
-                            line.append(l);
-                            if (addDollarSymbol) {
-                                line.append("$");
-                            }
-                            CommandResultSaver.saveCommandResult(line.toString(), true);
-                            line.delete(0, line.length());
-                            l = reader.readLine();
+                try (BufferedReader reader = new BufferedReader(
+                        new InputStreamReader(FileUtils.getFileAsStream(fileName), StandardCharsets.UTF_8))) {
+                    StringBuilder line = new StringBuilder();
+                    String l = reader.readLine();
+                    // if no temporary result in pipeResultFile, reads system input stream
+                    if (l == null && fileName.equals(CommandResultSaver.getResultPath())) {
+                        if (flags.contains(CatFlags.N)) {
+                            line.append("\t").append(1).append("\t\t");
                         }
-                    } catch (IOException e) {
-                        throw new RuntimeException(e);
+                        line.append(new Reader().readInput());
+                        if (flags.contains(CatFlags.E)) {
+                            line.append("$");
+                        }
+                        CommandResultSaver.savePipeCommandResult(line.toString());
+                        return;
                     }
+                    while (l != null) {
+                        if (flags.contains(CatFlags.N)) {
+                            line.append("\t").append(lineNumber).append("\t\t");
+                            lineNumber++;
+                        }
+                        line.append(l);
+                        if (flags.contains(CatFlags.E)) {
+                            line.append("$");
+                        }
+                        CommandResultSaver.savePipeCommandResult(line + "\n");
+                        line.delete(0, line.length());
+                        l = reader.readLine();
+                    }
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
                 }
             }
         }
@@ -85,14 +85,10 @@ public class Cat implements Command {
     @Override
     public boolean printHelp() {
         if (!flags.isEmpty() && (flags.contains(CatFlags.HELP) || flags.contains(CatFlags.H))) {
-            FileInfo helpInfo = FileUtils.getFileInfo(ResourcesLoader.getProperty(Commands.cat + ".help"), true);
-            while (helpInfo.getPosition() < helpInfo.getFileSize()) {
-                Optional<String> line = FileUtils.loadLineFromFile(helpInfo);
-                line.ifPresent(l -> CommandResultSaver.saveCommandResult(l, true));
-            }
+            String helpFileName = ResourcesLoader.getProperty(Commands.cat + ".help");
+            CommandResultSaver.saveFullPipeCommandResult(helpFileName);
             return true;
         }
         return false;
     }
-    
 }

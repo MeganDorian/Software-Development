@@ -2,40 +2,18 @@ package org.itmo.utils;
 
 import lombok.experimental.UtilityClass;
 
-import java.io.*;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.util.Objects;
-import java.util.Optional;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.RandomAccessFile;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 
 /**
  * Utility class to work with files
  */
 @UtilityClass
 public class FileUtils {
-    /**
-     * Finds file in the resources folder and collects information about it
-     *
-     * @param filename name of file
-     * @return FileInfo with information about file
-     */
-    public FileInfo getFileInfo(String filename, boolean fromResources) {
-        try {
-            File file;
-            if (fromResources) {
-                URI uri = Objects.requireNonNull(FileUtils.class.getClassLoader().getResource(filename).toURI());
-                file = new File(uri.getPath());
-            } else {
-                file = new File(filename);
-            }
-            if (!file.exists() || !file.isFile()) {
-                throw new FileNotFoundException("No file with name" + filename + " found");
-            }
-            return new FileInfo(file.getAbsolutePath(), file.length());
-        } catch (FileNotFoundException | URISyntaxException e) {
-            throw new RuntimeException(e);
-        }
-    }
     
     /**
      * Load file from resources
@@ -44,7 +22,7 @@ public class FileUtils {
      * @return stream with content of loaded file
      */
     public InputStream getFileFromResource(String fileName) {
-        InputStream stream = ResourcesLoader.class.getClassLoader().getResourceAsStream(fileName);
+        InputStream stream = FileUtils.class.getClassLoader().getResourceAsStream(fileName);
         if (stream == null) {
             throw new IllegalArgumentException("File not found: " + fileName);
         }
@@ -52,24 +30,19 @@ public class FileUtils {
     }
     
     /**
-     * Reads one line from the file from the pos
+     * Get InputStream of the file
      *
-     * @param info FileInfo with information about file
-     * @return one line from the file or null if end of file reached
+     * @param path absolute path to the file
+     * @return InputStream of the file
      */
-    public Optional<String> loadLineFromFile(FileInfo info) {
-        try (RandomAccessFile file = new RandomAccessFile(new File(info.getFilename()), "r")) {
-            if (info.getPosition() < file.length()) {
-                file.seek(info.getPosition());
-                String r = file.readLine();
-                info.setPosition(file.getFilePointer());
-                return Optional.of(r);
-            } else {
-                return Optional.empty();
-            }
+    public InputStream getFileAsStream(String path) {
+        InputStream stream;
+        try {
+            stream = Files.newInputStream(Paths.get(path));
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new IllegalArgumentException("File not found: " + path);
         }
+        return stream;
     }
     
     /**

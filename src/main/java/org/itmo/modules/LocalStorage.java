@@ -5,7 +5,7 @@ import java.util.Map;
 import java.util.Optional;
 
 public class LocalStorage {
-    Map<String, String> variables;
+    private final Map<String, String> variables;
     
     /**
      * Initialising a container for storing local variables

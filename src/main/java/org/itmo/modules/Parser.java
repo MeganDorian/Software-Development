@@ -1,9 +1,13 @@
 package org.itmo.modules;
 
+import org.itmo.commands.Commands;
 import org.itmo.utils.CommandInfo;
+import org.itmo.utils.Pair;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -13,214 +17,419 @@ import java.util.regex.Pattern;
 public class Parser {
     
     private final LocalStorage localStorage;
-    
-    private final Pattern singleQuotes;
-    private final Pattern doubleQuotes;
     private final Pattern variables;
     private final Pattern variableAddition;
     private final Pattern flag;
     
+    private final Pair<Integer> singleQuotesIndexes;
+    private final Pair<Integer> doubleQuotesIndexes;
+    
+    /**
+     * marks whether to look for the next occurrence of the pattern <br>
+     * first - found single quotes <br>
+     * second - found double quotes
+     */
+    private final Pair<Boolean> quotesFlags;
+    
+    /**
+     * store indexes where to need to continue parsing <br>
+     * first - index of last found quote (double or single) <br>
+     * second - next start index to search next quotes in the string
+     */
+    private final Pair<Integer> toSearchIndexes;
+    
     public Parser() {
         localStorage = new LocalStorage();
-        singleQuotes = Pattern.compile("'[^']*'");
-        doubleQuotes = Pattern.compile("\"[^\"]*\"");
         variables = Pattern.compile("\\$+[^$ ]+ *");
-        variableAddition = Pattern.compile("^[^= ]+=[^ ]*");
+        variableAddition = Pattern.compile("^[^ ]+=[^ ]*");
         flag = Pattern.compile("-{1,2}[^- ]+ *");
+        doubleQuotesIndexes = new Pair<>(-1, -1);
+        singleQuotesIndexes = new Pair<>(-1, -1);
+        toSearchIndexes = new Pair<>(-1, -1);
+        quotesFlags = new Pair<>(false, false);
+    }
+    
+    /**
+     * Searches the string for the first unescaped quotes
+     * of the predefined type starting from the specified index
+     * <p>
+     * @param line -- search string
+     * @param indexOfQuotes -- a starting index for a search
+     * @param typeOfQuotes -- a structure for finding an index
+     * @param startSubstring -- starting index for a search
+     * @return <true> -- if an unescaped character was found, <false> -- otherwise
+     */
+    private boolean findQuotes(String line, Pair<Integer> indexOfQuotes, char typeOfQuotes, int startSubstring) {
+        Pair<Integer> forSearch = new Pair<>(startSubstring, startSubstring - 1);
+        boolean isFindFirstQuotes = searchFirstUnescapedCharacter(forSearch, typeOfQuotes, line);
+        indexOfQuotes.first = forSearch.second;
+        boolean isFindSecondQuotes;
+        isFindSecondQuotes = isFindFirstQuotes && searchFirstUnescapedCharacter(forSearch, typeOfQuotes, line);
+        indexOfQuotes.second = forSearch.second + 1;
+        return isFindFirstQuotes && isFindSecondQuotes;
+    }
+    
+    /**
+     * Searches the first unescaped transmitted character
+     * in a string starting at the specified index
+     * <p>
+     * @param forSearch -- a structure for storing and returning search indexes
+     *                  NB! the second index of the structure at the start
+     *                  will be assigned to the first index with
+     *                  the addition of one - this is the index
+     *                  from which the search will be performed
+     * @param symbol -- search symbol
+     * @param line -- search string
+     * @return <true> -- if an unshielded character was found, <false> -- otherwise
+     *                  the second index of the "forSearch" structure corresponds
+     *                  to the index of the unshielded character.
+     *                  minus one -- the character was not found
+     */
+    private boolean searchFirstUnescapedCharacter (Pair<Integer> forSearch, char symbol, String line) {
+        boolean isFind;
+        do {
+            forSearch.first = forSearch.second + 1;
+            forSearch.second = line.substring(forSearch.first).indexOf(symbol);
+            if(forSearch.second != -1) {
+                forSearch.second += forSearch.first;
+                isFind = !isEscaped(line.substring(forSearch.first, forSearch.second));
+            } else {
+                isFind = true;
+            }
+        } while (!isFind);
+        return forSearch.second != -1;
+    }
+    
+    /**
+     * Checks if the substring has odd or even count of backslashes at the end. <br>
+     * Used to check if the symbol which follows after end of substring in the whole string is escaped or not
+     *
+     * @param substring substring to check
+     * @return true if next symbol in the whole string is escaped  <br>
+     * false otherwise
+     */
+    private boolean isEscaped(String substring) {
+        return getCountOfBackslashesAtTheEnd(substring) % 2 != 0;
+    }
+    
+    /**
+     * Counts the number of \ occurrences at the end of the string
+     *
+     * @param line string to check
+     * @return number of \ occurrences
+     */
+    private int getCountOfBackslashesAtTheEnd(String line) {
+        int countOfBackslashes = 0;
+        while (line.endsWith("\\")) {
+            countOfBackslashes++;
+            line = line.substring(0, line.lastIndexOf("\\"));
+        }
+        return countOfBackslashes;
+    }
+    
+    /**
+     * Replaces all paired backslashes with the single ones e.g. \\ will be replaces with \
+     *
+     * @param substring string in which need to do replace
+     * @return string with all paired backslashes
+     */
+    private String replaceEvenCountOfBackslashesWithSingles(String substring) {
+        int backslashesCount = getCountOfBackslashesAtTheEnd(substring);
+        while (substring.endsWith("\\")) {
+            substring = substring.substring(0, substring.lastIndexOf("\\"));
+        }
+        return substring + (backslashesCount != 0 ?
+                String.join("\\", Collections.nCopies(backslashesCount / 2, "\\")) : "");
+    }
+    
+    /**
+     * Removes the escaped backspace in front
+     * of special characters such as
+     * - '
+     * - "
+     * - $
+     * - |
+     * @param line -- processing string
+     * @return processed string
+     */
+    private String removingEscapingSlashForSpecialCharacters(String line) {
+        return line.replaceAll("\\\\'", "'")
+                .replaceAll("\\\\\"", "\"")
+                .replaceAll("\\\\\\$", "\\$")
+                .replaceAll("\\\\\\|", "|");
+    }
+    
+    /**
+     * Replaces all double backspaces
+     * with single backspaces,
+     * also handles escaping wildcards
+     *
+     * @param line -- processing string
+     * @return processed string
+     */
+    private String removeUnnecessaryBackspaces(String line) {
+        StringBuilder result = new StringBuilder();
+        int index;
+        do {
+            index = line.indexOf("\\\\");
+            if(index != -1) {
+                result.append(removingEscapingSlashForSpecialCharacters(line.substring(0, index)));
+                int indexStrartFind = index;
+                do {
+                    result.append("\\");
+                    indexStrartFind += 2;
+                } while (line.startsWith("\\\\", indexStrartFind));
+                line = line.substring(indexStrartFind);
+            }
+        } while (index != -1);
+        if(line.length() != 0) {
+            result.append(removingEscapingSlashForSpecialCharacters(line));
+        }
+        return result.toString();
     }
     
     /**
      * Handling a substring before/between/after inverted quotes
      *
-     * @param startIndex -- start index of line processing
-     * @param endIndex   -- end index of line processing
-     * @param line       -- processing string
+     * @param line -- processing string
      * @return processed string
      */
-    private StringBuilder substringProcessingWithoutQuotes(int startIndex, int endIndex, String line) {
-        StringBuilder result = new StringBuilder();
-        if (endIndex - startIndex > 0) {
-            //тут перед подстановкой можно добавить обработку на пайпы
-            result = substitutionVariables(line.substring(startIndex, endIndex).replaceAll(" +", " "));
+    private List<StringBuilder> substringProcessingWithoutQuotes(String line) {
+        List<StringBuilder> potentialCommands = new ArrayList<>();
+        String[] piped = line.split("\\|");
+        for (int i = 0; i < piped.length; i++) {
+            if (isEscaped(piped[i])) {
+                String concat;
+                if (line.contains("|") && line.charAt(piped[i].length()) == '|') {
+                    concat = replaceEvenCountOfBackslashesWithSingles(piped[i]) + "|" + (i + 1 != piped.length ? piped[i + 1] : "");
+                    i++;
+                } else {
+                    concat = replaceEvenCountOfBackslashesWithSingles(piped[i]);
+                }
+                potentialCommands.add(substitutionVariables(concat, true));
+            } else {
+                potentialCommands.add(substitutionVariables(piped[i], true));
+            }
         }
-        return result;
+        return potentialCommands;
+    }
+    
+    /**
+     * Processes a substring between double quotes
+     * @param line -- processing string
+     * @return processed substring
+     */
+    private Optional<String> doubleQuotesProcess(String line) {
+        toSearchIndexes.first = doubleQuotesIndexes.first;
+        toSearchIndexes.second = doubleQuotesIndexes.second;
+        // mark that the quotes have been processed
+        quotesFlags.second = false;
+        // send everything inside the double quotes to substitute variables
+        // the double quotes themselves will be deleted
+        return doubleQuotesIndexes.second - doubleQuotesIndexes.first > 0 ?
+                Optional.of(String.valueOf(substitutionVariables(line, false))) : Optional.empty();
+    }
+    
+    /**
+     * Processes a substring between single quotes
+     * @param line -- processing string
+     * @return processed substring
+     */
+    private Optional<String> singleQuotesProcess(String line) {
+        toSearchIndexes.first = singleQuotesIndexes.first;
+        toSearchIndexes.second = singleQuotesIndexes.second;
+        quotesFlags.first = false;
+        return singleQuotesIndexes.second - singleQuotesIndexes.first > 0 ?
+                Optional.of(line.substring(singleQuotesIndexes.first + 1, singleQuotesIndexes.second - 1)) : Optional.empty();
     }
     
     /**
      * Removes unnecessary quotes and substitutes variables<p>
-     * If no variable is found, substitutes an empty string
-     * <p>
-     * While not end of string reached do:
-     * 1. searches is there any single quotes in the substring
-     * 2. searches is there any double quotes in the substring
-     * 3. checks different situations if found two types of quotes:
-     * a) " ' ' "
-     * b) ' " " '
-     * c) ' " ' "
-     * d) " ' " '
-     * e) " " ' '
-     * f) ' ' " "
-     * 4. checks different situations if found only one type of quotes:
-     * a) if found only " "
-     * b) if found only ' '
+     * If no variable is found, substitutes an empty string <br>
+     * While not end of string reached do:<br>
+     * 1. searches is there any single quotes in the substring <br>
+     * 2. searches is there any double quotes in the substring <br>
+     * 3. checks different situations if found two types of quotes:  <br>
+     * a) " ' ' " <br>
+     * b) ' " " ' <br>
+     * c) ' " ' " <br>
+     * d) " ' " ' <br>
+     * e) " " ' ' <br>
+     * f) ' ' " " <br>
+     * 4. checks different situations if found only one type of quotes: <br>
+     * a) if found only " " <br>
+     * b) if found only ' ' <br>
      *
      * @param line -- processing string
      * @return substitution string
      */
-    public StringBuilder substitutor(String line) {
+    public List<String> substitutor(String line) {
         line = line.trim();
-        StringBuilder result = new StringBuilder();
-        Matcher matcherSingleQuotes = singleQuotes.matcher(line);
-        Matcher matcherDoubleQuotes = doubleQuotes.matcher(line);
-        int startIndexSubstring = 0;
-        int startOfSingleQuotes = -1, endOfSingleQuotes = -1;
-        int startOfDoubleQuotes = -1, endOfDoubleQuotes = -1;
-        int endOfWithoutQuotes;
-        int nextStartIndexSubstring;
-        // marks whether to look for the next occurrence of the pattern
-        boolean foundSingle = false, foundDouble = false;
-        while (startIndexSubstring != line.length()) {
-            String substitution = "";
+        int startSubstring = 0;
+        List<StringBuilder> potentialCommands = new ArrayList<>();
+        boolean isEndsWithPipe = false;
+        Optional<String> substitution;
+        while (startSubstring != line.length()) {
+            substitution = Optional.empty();
             // if double quotes are to be searched for
-            if (!foundDouble) {
-                foundDouble = matcherDoubleQuotes.find(startIndexSubstring);
-                startOfDoubleQuotes = foundDouble ? matcherDoubleQuotes.start() : -1;
-                endOfDoubleQuotes = foundDouble ? matcherDoubleQuotes.end() : -1;
+            if (!quotesFlags.second) {
+                quotesFlags.second = findQuotes(line, doubleQuotesIndexes, '\"', startSubstring);
             }
             
             //if single quotes are to be searched for
-            if (!foundSingle) {
-                foundSingle = matcherSingleQuotes.find(startIndexSubstring);
-                startOfSingleQuotes = foundSingle ? matcherSingleQuotes.start() : -1;
-                endOfSingleQuotes = foundSingle ? matcherSingleQuotes.end() : -1;
+            if (!quotesFlags.first) {
+                quotesFlags.first = findQuotes(line, singleQuotesIndexes, '\'', startSubstring);
             }
             
             // both types of quotes are found
-            if (foundDouble && foundSingle) {
+            if (quotesFlags.second && quotesFlags.first) {
                 // " ' ' " situation
-                if (startOfDoubleQuotes < startOfSingleQuotes
-                        && endOfDoubleQuotes > endOfSingleQuotes) {
-                    endOfWithoutQuotes = startOfDoubleQuotes;
-                    // send everything inside the double quotes to substitute variables
-                    // the double quotes themselves will be deleted
-                    if (endOfDoubleQuotes - startOfDoubleQuotes > 0) {
-                        substitution = String.valueOf(substitutionVariables(line.substring(startOfDoubleQuotes + 1, endOfDoubleQuotes - 1)));
-                    }
-                    nextStartIndexSubstring = endOfDoubleQuotes;
+                if (doubleQuotesIndexes.first < singleQuotesIndexes.first
+                        && doubleQuotesIndexes.second > singleQuotesIndexes.second) {
+                    substitution = doubleQuotesProcess(line.substring(doubleQuotesIndexes.first + 1, doubleQuotesIndexes.second - 1));
                     // discount all single quotes within double quotes
-                    foundSingle = matcherSingleQuotes.find(endOfDoubleQuotes);
-                    // mark that the quotes have been processed
-                    foundDouble = false;
-                }
-                // ' " " ' situation
-                else if (startOfSingleQuotes < startOfDoubleQuotes
-                        && endOfSingleQuotes > endOfDoubleQuotes) {
-                    endOfWithoutQuotes = startOfSingleQuotes;
-                    substitution = line.substring(startOfSingleQuotes + 1, endOfSingleQuotes - 1);
-                    if (endOfSingleQuotes - startOfSingleQuotes > 0) {
-                        substitution = line.substring(startOfSingleQuotes + 1, endOfSingleQuotes - 1);
-                    }
-                    nextStartIndexSubstring = endOfSingleQuotes;
+                    quotesFlags.first = findQuotes(line, singleQuotesIndexes, '\'', doubleQuotesIndexes.second);
+                } else if ((singleQuotesIndexes.first < doubleQuotesIndexes.first
+                        && singleQuotesIndexes.second > doubleQuotesIndexes.second) /* ' " " ' situation */
+                        ||
+                        (singleQuotesIndexes.first < doubleQuotesIndexes.first /* ' " ' "  situation */
+                                && singleQuotesIndexes.second < doubleQuotesIndexes.second)) {
+                    substitution = singleQuotesProcess(line);
                     // discount all double quotes inside single quotes
-                    foundDouble = matcherDoubleQuotes.find(endOfSingleQuotes);
-                    // mark that the quotes have been processed
-                    foundSingle = false;
+                    quotesFlags.second = findQuotes(line, doubleQuotesIndexes, '\"', singleQuotesIndexes.second);
                 }
-                // incorrect quotes, e.g. ' " ' "
+                // incorrect quotes
                 else {
-                    // ' " ' "  situation
-                    if (startOfSingleQuotes < startOfDoubleQuotes
-                            && endOfSingleQuotes < endOfDoubleQuotes) {
-                        endOfWithoutQuotes = startOfSingleQuotes;
-                        if (endOfSingleQuotes - startOfSingleQuotes > 0) {
-                            substitution = line.substring(startOfSingleQuotes + 1, endOfSingleQuotes - 1);
-                        }
-                        nextStartIndexSubstring = endOfSingleQuotes;
-                        // discount all double quotes inside single quotes
-                        foundDouble = matcherDoubleQuotes.find(endOfSingleQuotes);
-                        // mark that the quotes have been processed
-                        foundSingle = false;
-                    }
                     // " ' " '
-                    else if (startOfDoubleQuotes < startOfSingleQuotes
-                            && endOfDoubleQuotes < endOfSingleQuotes) {
-                        endOfWithoutQuotes = startOfDoubleQuotes;
-                        // send everything inside the double quotes to substitute variables
-                        // the double quotes themselves will be deleted
-                        if (endOfDoubleQuotes - startOfDoubleQuotes > 0) {
-                            substitution = line.substring(startOfDoubleQuotes + 1, endOfDoubleQuotes - 1);
+                    if (doubleQuotesIndexes.first < singleQuotesIndexes.first
+                            && doubleQuotesIndexes.second < singleQuotesIndexes.second) {
+                        toSearchIndexes.first = doubleQuotesIndexes.first;
+                        toSearchIndexes.second = doubleQuotesIndexes.second;
+                        if (doubleQuotesIndexes.second - doubleQuotesIndexes.first > 0) {
+                            substitution = Optional.of(line.substring(doubleQuotesIndexes.first + 1, doubleQuotesIndexes.second - 1));
                         }
-                        nextStartIndexSubstring = endOfDoubleQuotes;
                         // discount all single quotes within double quotes
-                        foundSingle = matcherSingleQuotes.find(endOfDoubleQuotes);
+                        quotesFlags.first = findQuotes(line, singleQuotesIndexes, '\'', doubleQuotesIndexes.second);
                         // mark that the quotes have been processed
-                        foundDouble = false;
+                        quotesFlags.second = false;
                     }
                     // if quotes does not intersect
                     else {
-                        // " " ' ' situation
-                        if (startOfDoubleQuotes < startOfSingleQuotes) {
-                            endOfWithoutQuotes = startOfDoubleQuotes;
-                            // send everything inside the double quotes to substitute variables
-                            // the double quotes themselves will be deleted
-                            if (endOfDoubleQuotes - startOfDoubleQuotes > 0) {
-                                substitution = String.valueOf(substitutionVariables(
-                                        line.substring(startOfDoubleQuotes + 1, endOfDoubleQuotes - 1)));
-                            }
-                            nextStartIndexSubstring = endOfDoubleQuotes;
-                            // mark that the quotes have been processed
-                            foundDouble = false;
-                        }
-                        // ' ' " "
-                        else {
-                            endOfWithoutQuotes = startOfSingleQuotes;
-                            // add a line in single quotes, the quotes themselves will be cut out
-                            if (endOfSingleQuotes - startOfSingleQuotes > 0) {
-                                substitution = line.substring(startOfSingleQuotes + 1, endOfSingleQuotes - 1);
-                            }
-                            nextStartIndexSubstring = endOfSingleQuotes;
-                            // mark that the quotes have been processed
-                            foundSingle = false;
-                        }
+                        substitution = doubleQuotesIndexes.first < singleQuotesIndexes.first ? /* " " ' ' situation */
+                                doubleQuotesProcess(line.substring(doubleQuotesIndexes.first + 1, doubleQuotesIndexes.second - 1))
+                                :
+                                singleQuotesProcess(line); // ' ' " " situation
                     }
                 }
             }
-            // if you have found even one type of inverted comma
-            else if (foundDouble) {
-                endOfWithoutQuotes = startOfDoubleQuotes;
-                // send everything inside the double quotes to substitute variables
-                // the double quotes themselves will be deleted
-                if (endOfDoubleQuotes - startOfDoubleQuotes > 0) {
-                    substitution = String.valueOf(substitutionVariables(
-                            line.substring(startOfDoubleQuotes + 1, endOfDoubleQuotes - 1)));
-                }
-                nextStartIndexSubstring = endOfDoubleQuotes;
-                // mark that the quotes have been processed
-                foundDouble = false;
-            } else if (foundSingle) {
-                endOfWithoutQuotes = startOfSingleQuotes;
-                if (endOfSingleQuotes - startOfSingleQuotes > 0) {
-                    substitution = line.substring(startOfSingleQuotes + 1, endOfSingleQuotes - 1);
-                }
-                nextStartIndexSubstring = endOfSingleQuotes;
-                // mark that the quotes have been processed
-                foundSingle = false;
+            // only double quotes found
+            else if (quotesFlags.second) {
+                substitution = doubleQuotesProcess(line.substring(doubleQuotesIndexes.first + 1, doubleQuotesIndexes.second - 1));
             }
-            // if there are no pattern entries
+            // only single quotes found
+            else if (quotesFlags.first) {
+                substitution = singleQuotesProcess(line);
+            }
+            // no quotes found
             else {
-                endOfWithoutQuotes = line.length();
-                substitution = "";
-                nextStartIndexSubstring = line.length();
+                toSearchIndexes.first = toSearchIndexes.second = line.length();
+                substitution = Optional.empty();
             }
             // if there is an unprocessed string between the current pattern found and the previous one
-            // we give it to substitute variables
-            result.append(substringProcessingWithoutQuotes(startIndexSubstring, endOfWithoutQuotes, line));
-            result.append(substitution);
-            startIndexSubstring = nextStartIndexSubstring;
+            // we need to substitute variables
+            if (toSearchIndexes.first - startSubstring > 0) {
+                String substring = line.substring(startSubstring, toSearchIndexes.first).replaceAll(" +", " ");
+                List<StringBuilder> piped = substringProcessingWithoutQuotes(substring);
+                
+                if (potentialCommands.size() == 0) {
+                    potentialCommands.addAll(piped);
+                } else if (!isEndsWithPipe) {
+                    String concat = (potentialCommands.get(potentialCommands.size() - 1) + piped.get(0).toString()).trim();
+                    potentialCommands.remove(potentialCommands.size() - 1);
+                    potentialCommands.add(new StringBuilder(concat));
+                    if (piped.size() > 1) {
+                        potentialCommands.addAll(piped.subList(1, piped.size()));
+                    }
+                }
+                isEndsWithPipe = substring.endsWith("|");
+                if (!isEndsWithPipe) {
+                    String concat = potentialCommands.get(potentialCommands.size() - 1) + substitution.orElse("");
+                    potentialCommands.remove(potentialCommands.size() - 1);
+                    potentialCommands.add(new StringBuilder(concat));
+                } else {
+                    substitution.ifPresent(s -> potentialCommands.add(new StringBuilder(s)));
+                }
+            }
+            startSubstring = toSearchIndexes.second;
         }
-        String res = result.toString().replaceAll("\\\\", "");
-        result = new StringBuilder(res);
-        return result;
+        List<String> parsedCommand = new ArrayList<>();
+        potentialCommands.forEach(p -> parsedCommand.add(p.toString().trim()));
+        return parsedCommand;
+    }
+    
+    /**
+     * Parses the string into commands
+     * <p>
+     * If the command is a variable initialisation/reinitialisation, it performs this
+     *
+     * @param parsedCommands list of parsed commands
+     * @return command name, flags and parameters if it is a command
+     * and an empty list if it is a variable initialisation/reinitialisation
+     */
+    public List<CommandInfo> commandParser(List<String> parsedCommands) {
+        List<CommandInfo> commands = new ArrayList<>();
+        for (String parsedCommand : parsedCommands) {
+            Matcher matcherVariableAddition = variableAddition.matcher(parsedCommand);
+            if (matcherVariableAddition.find()) {
+                int indexEq = parsedCommand.indexOf("=");
+                localStorage.set(parsedCommand.substring(0, indexEq), parsedCommand.substring(indexEq + 1));
+            } else {
+                int index = parsedCommand.indexOf(" ");
+                if (index == -1) {
+                    if (Checker.checkCommandIsInternal(parsedCommand)) {
+                        commands.add(new CommandInfo(Commands.valueOf(parsedCommand), new ArrayList<>(), new ArrayList<>()));
+                    } else {
+                        commands.add(new CommandInfo(Commands.valueOf("external"), List.of(parsedCommand),  new ArrayList<>()));
+                    }
+                } else {
+                    String name = parsedCommand.substring(0, index);
+                    List<String> flags = new ArrayList<>();
+                    List<String> param = new ArrayList<>();
+                    String newLine = parsedCommand.substring(index + 1);
+                    if (Checker.checkCommandIsInternal(name)) {
+                        Matcher matcherFlag = flag.matcher(newLine);
+                        index = 0;
+                        while (matcherFlag.find()) {
+                            if (matcherFlag.start() - index > 0) {
+                                List<String> all = List.of(newLine.substring(index, matcherFlag.start()).split(" +"));
+                                for (String s : all) {
+                                    if (s.length() > 0) {
+                                        param.add(s);
+                                    }
+                                }
+                            }
+                            flags.add(newLine.substring(matcherFlag.start(), matcherFlag.end()).replaceAll(" ", ""));
+                            index = matcherFlag.end();
+                        }
+                        if (newLine.length() - index > 0) {
+                            List<String> all = List.of(newLine.substring(index).split(" +"));
+                            for (String s : all) {
+                                if (s.length() > 0) {
+                                    param.add(s);
+                                }
+                            }
+                        }
+                        commands.add(new CommandInfo(Commands.valueOf(name), flags, param));
+                    } else {
+                        param.add(newLine);
+                        flags.add(name);
+                        commands.add(new CommandInfo(Commands.valueOf("external"), flags, param));
+                    }
+                }
+            }
+            
+        }
+        return commands;
     }
     
     /**
@@ -228,22 +437,26 @@ public class Parser {
      * If no variable is found, an empty string will be substituted for the default
      *
      * @param line -- substitution string
+     * @param isDoubleQuotes -- <true> -- if the substring is enclosed in double quotes,
+     *                       <false> -- otherwise
+     *                       This is necessary to understand whether
+     *                       double backspace cases need to be handled.
      * @return the line with the substitutions made
      */
-    private StringBuilder substitutionVariables(String line) {
+    private StringBuilder substitutionVariables(String line, boolean isDoubleQuotes) {
         StringBuilder result = new StringBuilder();
         int index = 0;
         Matcher matcherVariables = variables.matcher(line);
         while (matcherVariables.find()) {
-            String beforeDollarSymbol = line.substring(index, matcherVariables.start());
-            int countOfBackslashes = 0;
-            while (beforeDollarSymbol.lastIndexOf("\\") != -1) {
-                countOfBackslashes++;
-                beforeDollarSymbol = beforeDollarSymbol.substring(0, beforeDollarSymbol.lastIndexOf("\\"));
-            }
-            if (countOfBackslashes % 2 == 0) {
+            String beforeDollar = line.substring(index, matcherVariables.start());
+            if (!isEscaped(beforeDollar)) {
                 // add a line before the variable
-                result.append(line, index, matcherVariables.start());
+                if(isDoubleQuotes) {
+                    result.append(removeUnnecessaryBackspaces(beforeDollar));
+                }
+                else {
+                    result.append(beforeDollar);
+                }
                 String subline = line.substring(matcherVariables.start(), matcherVariables.end());
                 while (subline.startsWith("$$")) {
                     result.append("$$");
@@ -260,68 +473,26 @@ public class Parser {
                 } else {
                     index = line.length() - subline.length();
                 }
+            } else {
+                if(isDoubleQuotes) {
+                    result.append(removeUnnecessaryBackspaces(line.substring(index, matcherVariables.end())));
+                }
+                else {
+                    result.append(line.substring(index, matcherVariables.end()));
+                }
+                index = matcherVariables.end();
             }
         }
         if (line.length() - index > 0) {
-            result.append(line, index, line.length());
-        }
-        return result;
-    }
-    
-    /**
-     * Parses the string into commands
-     * <p>
-     * If the command is a variable initialisation/reinitialisation, it performs this
-     *
-     * @param line processing string
-     * @return command name, flags and parameters if it is a command
-     * and an empty list if it is a variable initialisation/reinitialisation
-     */
-    public List<CommandInfo> commandParser(String line) {
-        List<CommandInfo> commands = new ArrayList<>();
-        Matcher matcherVariableAddition = variableAddition.matcher(line);
-        if (matcherVariableAddition.find()) {
-            int indexEq = line.indexOf("=");
-            localStorage.set(line.substring(0, indexEq), line.substring(indexEq + 1));
-        } else {
-            int index = line.indexOf(" ");
-            if (index == -1) {
-                commands.add(new CommandInfo(line, new ArrayList<>(), new ArrayList<>()));
-            } else {
-                String name = line.substring(0, index);
-                List<String> flags = new ArrayList<>();
-                List<String> param = new ArrayList<>();
-                String newLine = line.substring(index + 1);
-                if (Checker.checkCommandIsInternal(name)) {
-                    Matcher matcherFlag = flag.matcher(newLine);
-                    index = 0;
-                    while (matcherFlag.find()) {
-                        if (matcherFlag.start() - index > 0) {
-                            List<String> all = List.of(newLine.substring(index, matcherFlag.start()).split("[ ]+"));
-                            for (String s : all) {
-                                if (s.length() > 0) {
-                                    param.add(s);
-                                }
-                            }
-                        }
-                        flags.add(newLine.substring(matcherFlag.start(), matcherFlag.end()).replaceAll(" ", ""));
-                        index = matcherFlag.end();
-                    }
-                    if (newLine.length() - index > 0) {
-                        List<String> all = List.of(newLine.substring(index).split("[ ]+"));
-                        for (String s : all) {
-                            if (s.length() > 0) {
-                                param.add(s);
-                            }
-                        }
-                    }
-                } else {
-                    param.add(newLine);
-                }
-                commands.add(new CommandInfo(name, flags, param));
+            String substring = line.substring(index);
+            if(isDoubleQuotes) {
+                result.append(removeUnnecessaryBackspaces(substring));
+            }
+            else {
+                result.append(substring);
             }
         }
-        return commands;
+        return result;
     }
     
 }

@@ -19,15 +19,12 @@ public class Checker {
      * Check commands
      *
      * @param command - information about command
-     * @return true if the command is valid, false otherwise
      */
-    public void checkCommand(List<CommandInfo> command) throws FlagNotFoundException, CheckerException
-    {
+    public void checkCommand(List<CommandInfo> command) throws FlagNotFoundException, CheckerException {
         for (CommandInfo com : command) {
             try {
-                Commands.valueOf(com.getCommandName());
                 switch (com.getCommandName()) {
-                    case "cat": {
+                    case cat: {
                         for (int i = 0; i < com.getFlags().size(); i++) {
                             if (!CatFlags.isBelongs(com.getFlags().get(i))) {
                                 throw new FlagNotFoundException("cat: unrecognized option '"
@@ -37,7 +34,7 @@ public class Checker {
                         }
                         break;
                     }
-                    case "pwd": {
+                    case pwd: {
                         for (int i = 0; i < com.getFlags().size(); i++) {
                             if (!PwdFlags.isBelongs(com.getFlags().get(i))) {
                                 throw new FlagNotFoundException("pwd: unrecognized option '"
@@ -47,7 +44,7 @@ public class Checker {
                         }
                         break;
                     }
-                    case "wc": {
+                    case wc: {
                         for (int i = 0; i < com.getFlags().size(); i++) {
                             if (!WcFlags.isBelongs(com.getFlags().get(i))) {
                                 throw new FlagNotFoundException("wc: unrecognized option '"
@@ -58,15 +55,12 @@ public class Checker {
                         break;
                     }
                 }
-            }
-            catch (IllegalArgumentException ignored) {
+            } catch (IllegalArgumentException ignored) {
                 //if it is an external command
-            }
-            catch (FlagNotFoundException exception) {
+            } catch (FlagNotFoundException exception) {
                 //if the flag for the embedded command is incorrect
                 throw new FlagNotFoundException(exception);
-            }
-            catch (Exception exception) {
+            } catch (Exception exception) {
                 throw new CheckerException(exception);
             }
         }

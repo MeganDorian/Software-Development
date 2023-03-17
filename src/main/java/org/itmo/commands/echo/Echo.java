@@ -14,10 +14,10 @@ public class Echo implements Command {
     /**
      * Content to print
      */
-    private final List<String> output;
+    private final List<String> paramsToPrint;
     
     public Echo(CommandInfo commandInfo) {
-        output = commandInfo.getParams();
+        paramsToPrint = commandInfo.getParams();
     }
     
     /**
@@ -25,12 +25,12 @@ public class Echo implements Command {
      */
     @Override
     public void execute() {
-        if (output.isEmpty()) {
-            CommandResultSaver.saveCommandResult("\n", false);
+        if (paramsToPrint.isEmpty()) {
+            CommandResultSaver.savePipeCommandResult("\n");
         } else {
-            output.forEach(s -> CommandResultSaver.saveCommandResult(
-                    s + (!Objects.equals(s, output.get(output.size() - 1)) ? " " : ""),
-                    false));
+            paramsToPrint.forEach(s -> CommandResultSaver.savePipeCommandResult(
+                    s + (!Objects.equals(s, paramsToPrint.get(paramsToPrint.size() - 1)) ? " " : "")
+            ));
         }
     }
     

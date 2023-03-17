@@ -12,9 +12,6 @@ import org.itmo.utils.CommandResultSaver;
 import java.util.List;
 
 public class Main {
-    private static final String ANSI_GREEN = "\u001B[32m";
-    private static final String ANSI_RESET = "\u001B[0m";
-    
     public static void main(String[] args) {
         Reader reader = new Reader();
         Parser parser = new Parser();
@@ -22,9 +19,9 @@ public class Main {
         Executor executor = new Executor();
         List<CommandInfo> allCommands;
         do {
-            System.out.print(ANSI_GREEN + ">> " + ANSI_RESET);
+            System.out.print(">> ");
             String command = reader.readInput();
-            allCommands = parser.commandParser(parser.substitutor(command).toString());
+            allCommands = parser.commandParser(parser.substitutor(command));
             try {
                 checker.checkCommand(allCommands);
             } catch (FlagNotFoundException | CheckerException e) {

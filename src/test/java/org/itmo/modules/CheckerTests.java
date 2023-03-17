@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Stream;
 
+import static org.itmo.commands.Commands.*;
 import static org.junit.jupiter.api.Assertions.*;
 
 public class CheckerTests {
@@ -20,13 +21,22 @@ public class CheckerTests {
     @Test
     public void externalCommandTest() {
         assertDoesNotThrow(() -> checker.checkCommand(
-                    List.of(new CommandInfo("someCommand", new ArrayList<>(), new ArrayList<>()))));
+                List.of(new CommandInfo(external, List.of("someCommand"), new ArrayList<>()))));
     }
     
     @ParameterizedTest
     @MethodSource("forCheckForNotExistsFlagsAllCommands")
-    public void checkForNotExistsFlagsAllCommands(List<CommandInfo> commands, String error) {
+    public void checkForNotExistsFlagsAllCommands(List<CommandInfo> commands) {
         assertThrows(FlagNotFoundException.class, () -> checker.checkCommand(commands));
+    }
+    
+    public static Stream<? extends Arguments> forCheckForNotExistsFlagsAllCommands() {
+        return Stream.of(Arguments.of(
+                        List.of(new CommandInfo(cat, List.of("-er"), new ArrayList<>()))),
+                Arguments.of(
+                        List.of(new CommandInfo(pwd, List.of("-er"), new ArrayList<>()))),
+                Arguments.of(List.of(new CommandInfo(wc, List.of("-er"), new ArrayList<>())))
+        );
     }
     
     @ParameterizedTest
@@ -35,10 +45,23 @@ public class CheckerTests {
         assertDoesNotThrow(() -> checker.checkCommand(commands));
     }
     
+    public static Stream<? extends Arguments> forCheckInternalCommandsWithoutFlags() {
+        return Stream.of(Arguments.of(List.of(new CommandInfo(echo, new ArrayList<>(), new ArrayList<>()),
+                new CommandInfo(exit, new ArrayList<>(), new ArrayList<>()))));
+    }
+    
     @ParameterizedTest
     @MethodSource("forCheckCommandIsInternal")
     public void checkCommandIsInternal(String nameCommand) {
         assertTrue(Checker.checkCommandIsInternal(nameCommand));
+    }
+    
+    public static Stream<? extends Arguments> forCheckCommandIsInternal() {
+        return Stream.of(Arguments.of("cat"),
+                Arguments.of("echo"),
+                Arguments.of("exit"),
+                Arguments.of("pwd"),
+                Arguments.of("wc"));
     }
     
     @ParameterizedTest
@@ -47,36 +70,10 @@ public class CheckerTests {
         assertFalse(Checker.checkCommandIsInternal(nameCommand));
     }
     
-    public static Stream<? extends Arguments> forCheckForNotExistsFlagsAllCommands() {
-        return Stream.of(Arguments.of(
-                List.of(new CommandInfo("cat",
-                                        List.of("-er"), new ArrayList<>())),
-                "cat: unrecognized option '-er'\nTry 'cat --help' for more information."),
-                         Arguments.of(
-                                 List.of(new CommandInfo("pwd",
-                                                         List.of("-er"), new ArrayList<>())),
-                                 "pwd: unrecognized option '-er'\nTry 'pwd --help' for more information."),
-                         Arguments.of(List.of(new CommandInfo("wc", List.of("-er"), new ArrayList<>())),
-                                      "wc: unrecognized option '-er'\nTry 'wc --help' for more information."));
-    }
-    
-    public static Stream<? extends Arguments> forCheckInternalCommandsWithoutFlags() {
-        return Stream.of(Arguments.of(List.of(new CommandInfo("echo", new ArrayList<>(), new ArrayList<>()),
-                                              new CommandInfo("exit", new ArrayList<>(), new ArrayList<>()))));
-    }
-    
-    public static Stream<? extends Arguments> forCheckCommandIsInternal() {
-        return Stream.of(Arguments.of("cat"),
-                         Arguments.of("echo"),
-                         Arguments.of("exit"),
-                         Arguments.of("pwd"),
-                         Arguments.of("wc"));
-    }
-    
     public static Stream<? extends Arguments> forCheckCommandIsExternal() {
         return Stream.of(Arguments.of("Cat"),
-                         Arguments.of("someCommand"),
-                         Arguments.of("Exit"));
+                Arguments.of("someCommand"),
+                Arguments.of("Exit"));
     }
     
 }

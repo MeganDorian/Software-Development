@@ -6,6 +6,7 @@ import org.itmo.utils.CommandInfo;
 import org.itmo.utils.CommandResultSaver;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
@@ -38,6 +39,9 @@ public class External implements Command {
                 builder.command("sh", "-c", name + " " + paramWithFlags);
             }
             builder.redirectInput(ProcessBuilder.Redirect.INHERIT);
+            builder.redirectOutput(ProcessBuilder.Redirect.INHERIT);
+//          for cd - setting the start-up directory of the process
+//            builder.directory(new File("D:\\LINK"));
             Process process = builder.start();
             BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream(),
                     StandardCharsets.UTF_8));

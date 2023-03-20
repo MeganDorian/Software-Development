@@ -1,3 +1,7 @@
+import org.gradle.api.tasks.testing.logging.TestExceptionFormat
+import org.gradle.api.tasks.testing.logging.TestLogEvent
+
+
 plugins {
     id 'java'
 }
@@ -19,6 +23,30 @@ dependencies {
     testImplementation 'org.junit.jupiter:junit-jupiter-api:5.8.1'
     testImplementation group: 'org.junit.jupiter', name: 'junit-jupiter-params', version: '5.9.2'
     testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.8.1'
+}
+
+tasks.withType(Test).configureEach {
+    testLogging {
+        events TestLogEvent.FAILED,
+                TestLogEvent.PASSED,
+                TestLogEvent.SKIPPED,
+                TestLogEvent.STANDARD_OUT
+        exceptionFormat TestExceptionFormat.FULL
+        showExceptions true
+        showCauses true
+        showStackTraces true
+        info.events = debug.events
+        info.exceptionFormat = debug.exceptionFormat
+
+    }
+    afterSuite { desc, result ->
+        if (!desc.parent) { // will match the outermost suite
+            def output = "Results: ${result.resultType} (${result.testCount} tests, ${result.successfulTestCount} successes, ${result.failedTestCount} failures, ${result.skippedTestCount} skipped)"
+            def startItem = '|  ', endItem = '  |'
+            def repeatLength = startItem.length() + output.length() + endItem.length()
+            println('\n' + ('-' * repeatLength) + '\n' + startItem + output + endItem + '\n' + ('-' * repeatLength))
+        }
+    }
 }
 
 test {

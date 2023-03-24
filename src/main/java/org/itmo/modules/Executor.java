@@ -1,5 +1,9 @@
 package org.itmo.modules;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.List;
 import org.itmo.commands.cat.Cat;
 import org.itmo.commands.echo.Echo;
 import org.itmo.commands.exit.Exit;
@@ -13,14 +17,9 @@ import org.itmo.utils.CommandInfo;
 import org.itmo.utils.CommandResultSaver;
 import org.itmo.utils.FileUtils;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.util.List;
-
 public class Executor {
     
-    public Executor() {
+    public Executor () {
         try {
             CommandResultSaver.createCommandResultFile();
         } catch (IOException e) {
@@ -28,7 +27,7 @@ public class Executor {
         }
     }
     
-    public boolean run(List<CommandInfo> allCommands) {
+    public boolean run (List<CommandInfo> allCommands) {
         try {
             CommandResultSaver.clearCommandResult();
         } catch (IOException e) {
@@ -86,16 +85,13 @@ public class Executor {
                 e.printStackTrace();
                 return false;
             }
-            if (allCommands.size() > 1 || (allCommands.size() == 1 && isInternal))
-            {
-                try (BufferedReader reader = new BufferedReader(new InputStreamReader(FileUtils.getFileAsStream(CommandResultSaver.getResultPath()))))
-                {
-                    while (reader.ready())
-                    {
+            if (allCommands.size() > 1 || (allCommands.size() == 1 && isInternal)) {
+                try (BufferedReader reader = new BufferedReader(new InputStreamReader(
+                    FileUtils.getFileAsStream(CommandResultSaver.getResultPath())))) {
+                    while (reader.ready()) {
                         System.out.println(reader.readLine());
                     }
-                } catch (IOException e)
-                {
+                } catch (IOException e) {
                     throw new RuntimeException(e);
                 }
             }

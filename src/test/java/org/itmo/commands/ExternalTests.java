@@ -34,7 +34,9 @@ public class ExternalTests {
         }
         external.execute();
         CommandResultSaver.saveCommandResult();
-        String actual = FileUtils.loadFullContent(CommandResultSaver.getResult().toFile());
+        String actual = FileUtils.loadFullContent(
+                CommandResultSaver.getResult().toFile()
+        ).replaceAll("\r", "").replaceAll("\n", "");
         assertEquals(System.getProperty("user.dir"), actual);
     }
     

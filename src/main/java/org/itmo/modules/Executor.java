@@ -34,6 +34,7 @@ public class Executor {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+        boolean isInternal = true;
         if (!allCommands.isEmpty()) {
             try {
                 for (CommandInfo command : allCommands) {
@@ -72,6 +73,7 @@ public class Executor {
                         default: {
                             External external = new External(command);
                             external.execute();
+                            isInternal = false;
                             break;
                         }
                     }
@@ -84,13 +86,18 @@ public class Executor {
                 e.printStackTrace();
                 return false;
             }
-            
-            try (BufferedReader reader = new BufferedReader(new InputStreamReader(FileUtils.getFileAsStream(CommandResultSaver.getResultPath())))) {
-                while (reader.ready()) {
-                    System.out.println(reader.readLine());
+            if (allCommands.size() > 1 || (allCommands.size() == 1 && isInternal))
+            {
+                try (BufferedReader reader = new BufferedReader(new InputStreamReader(FileUtils.getFileAsStream(CommandResultSaver.getResultPath()))))
+                {
+                    while (reader.ready())
+                    {
+                        System.out.println(reader.readLine());
+                    }
+                } catch (IOException e)
+                {
+                    throw new RuntimeException(e);
                 }
-            } catch (IOException e) {
-                throw new RuntimeException(e);
             }
         }
         return true;

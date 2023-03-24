@@ -1,9 +1,8 @@
 package org.itmo.commands.exit;
 
+import java.io.IOException;
 import org.itmo.commands.Command;
 import org.itmo.utils.CommandResultSaver;
-
-import java.io.IOException;
 
 /**
  * EXIT command to exit from the cli

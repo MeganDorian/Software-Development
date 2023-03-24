@@ -1,10 +1,9 @@
 package org.itmo.utils;
 
+import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import org.itmo.commands.Commands;
-
-import java.util.List;
 
 @Getter
 @AllArgsConstructor

@@ -1,12 +1,16 @@
 package org.itmo.utils;
 
-import lombok.Getter;
-import lombok.experimental.UtilityClass;
-
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.PrintWriter;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import lombok.Getter;
+import lombok.experimental.UtilityClass;
 
 /**
  * Saves result of the command to the temporary file
@@ -34,6 +38,20 @@ public class CommandResultSaver {
         pipeResultPath = pipeResult.toAbsolutePath().toString();
     }
     
+    public void saveFullPipeCommandResult(String fileName) {
+        try (BufferedReader reader = new BufferedReader(
+            new InputStreamReader(FileUtils.getFileFromResource(fileName),
+                StandardCharsets.UTF_8))) {
+            String line = reader.readLine();
+            while (line != null) {
+                CommandResultSaver.savePipeCommandResult(line);
+                line = reader.readLine();
+            }
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+    
     /**
      * Saves result of command execution to temporary piped file
      *
@@ -42,19 +60,6 @@ public class CommandResultSaver {
     public void savePipeCommandResult(String content) {
         try (FileOutputStream fileOutputStream = new FileOutputStream(pipeResult.toFile(), true)) {
             fileOutputStream.write((content).getBytes(StandardCharsets.UTF_8));
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-    }
-    
-    public void saveFullPipeCommandResult(String fileName) {
-        try (BufferedReader reader = new BufferedReader(
-                new InputStreamReader(FileUtils.getFileFromResource(fileName), StandardCharsets.UTF_8))) {
-            String line = reader.readLine();
-            while (line != null) {
-                CommandResultSaver.savePipeCommandResult(line);
-                line = reader.readLine();
-            }
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -100,11 +105,10 @@ public class CommandResultSaver {
     /**
      * Deletes temporary file
      *
-     * @return true if temporary file successfully deleted <br>
-     * false - otherwise
+     * @return true if temporary file successfully deleted <br> false - otherwise
      */
     public boolean deleteCommandResult() {
-        return result != null && result.toFile().delete()
-                && pipeResult != null && pipeResult.toFile().delete();
+        return result != null && result.toFile().delete() && pipeResult != null &&
+               pipeResult.toFile().delete();
     }
 }

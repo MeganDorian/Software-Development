@@ -29,6 +29,7 @@ public enum CatFlags {
      * Checks if flag belongs to any supported cat flags
      *
      * @param flag name of flag to check
+     *
      * @return <b>true</b> if flag belongs to the supported CAT flags <br>
      * <b>false</b> if not
      */

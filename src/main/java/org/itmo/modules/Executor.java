@@ -19,7 +19,7 @@ import org.itmo.utils.FileUtils;
 
 public class Executor {
     
-    public Executor () {
+    public Executor() {
         try {
             CommandResultSaver.createCommandResultFile();
         } catch (IOException e) {
@@ -27,7 +27,7 @@ public class Executor {
         }
     }
     
-    public boolean run (List<CommandInfo> allCommands) {
+    public boolean run(List<CommandInfo> allCommands) {
         try {
             CommandResultSaver.clearCommandResult();
         } catch (IOException e) {

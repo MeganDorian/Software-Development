@@ -1,11 +1,10 @@
 package org.itmo.commands.echo;
 
+import java.util.List;
+import java.util.Objects;
 import org.itmo.commands.Command;
 import org.itmo.utils.CommandInfo;
 import org.itmo.utils.CommandResultSaver;
-
-import java.util.List;
-import java.util.Objects;
 
 /**
  * ECHO command to print in the console
@@ -29,8 +28,7 @@ public class Echo implements Command {
             CommandResultSaver.savePipeCommandResult("\n");
         } else {
             paramsToPrint.forEach(s -> CommandResultSaver.savePipeCommandResult(
-                    s + (!Objects.equals(s, paramsToPrint.get(paramsToPrint.size() - 1)) ? " " : "")
-            ));
+                s + (!Objects.equals(s, paramsToPrint.get(paramsToPrint.size() - 1)) ? " " : "")));
         }
     }
     

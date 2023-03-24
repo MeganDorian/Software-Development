@@ -1,15 +1,14 @@
 package org.itmo.modules;
 
-import org.itmo.commands.Commands;
-import org.itmo.utils.CommandInfo;
-import org.itmo.utils.Pair;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import org.itmo.commands.Commands;
+import org.itmo.utils.CommandInfo;
+import org.itmo.utils.Pair;
 
 /**
  * Performs command parsing and substitution
@@ -25,16 +24,14 @@ public class Parser {
     private final Pair<Integer> doubleQuotesIndexes;
     
     /**
-     * marks whether to look for the next occurrence of the pattern <br>
-     * first - found single quotes <br>
-     * second - found double quotes
+     * marks whether to look for the next occurrence of the pattern <br> first - found single quotes
+     * <br> second - found double quotes
      */
     private final Pair<Boolean> quotesFlags;
     
     /**
-     * store indexes where to need to continue parsing <br>
-     * first - index of last found quote (double or single) <br>
-     * second - next start index to search next quotes in the string
+     * store indexes where to need to continue parsing <br> first - index of last found quote
+     * (double or single) <br> second - next start index to search next quotes in the string
      */
     private final Pair<Integer> toSearchIndexes;
     
@@ -50,47 +47,51 @@ public class Parser {
     }
     
     /**
-     * Searches the string for the first unescaped quotes
-     * of the predefined type starting from the specified index
+     * Searches the string for the first unescaped quotes of the predefined type starting from the
+     * specified index
      * <p>
-     * @param line -- search string
-     * @param indexOfQuotes -- a starting index for a search
-     * @param typeOfQuotes -- a structure for finding an index
+     *
+     * @param line           -- search string
+     * @param indexOfQuotes  -- a starting index for a search
+     * @param typeOfQuotes   -- a structure for finding an index
      * @param startSubstring -- starting index for a search
+     *
      * @return <true> -- if an unescaped character was found, <false> -- otherwise
      */
-    private boolean findQuotes(String line, Pair<Integer> indexOfQuotes, char typeOfQuotes, int startSubstring) {
+    private boolean findQuotes(String line, Pair<Integer> indexOfQuotes, char typeOfQuotes,
+                               int startSubstring) {
         Pair<Integer> forSearch = new Pair<>(startSubstring, startSubstring - 1);
         boolean isFindFirstQuotes = searchFirstUnescapedCharacter(forSearch, typeOfQuotes, line);
         indexOfQuotes.first = forSearch.second;
         boolean isFindSecondQuotes;
-        isFindSecondQuotes = isFindFirstQuotes && searchFirstUnescapedCharacter(forSearch, typeOfQuotes, line);
+        isFindSecondQuotes =
+            isFindFirstQuotes && searchFirstUnescapedCharacter(forSearch, typeOfQuotes, line);
         indexOfQuotes.second = forSearch.second + 1;
         return isFindFirstQuotes && isFindSecondQuotes;
     }
     
     /**
-     * Searches the first unescaped transmitted character
-     * in a string starting at the specified index
+     * Searches the first unescaped transmitted character in a string starting at the specified
+     * index
      * <p>
-     * @param forSearch -- a structure for storing and returning search indexes
-     *                  NB! the second index of the structure at the start
-     *                  will be assigned to the first index with
-     *                  the addition of one - this is the index
-     *                  from which the search will be performed
-     * @param symbol -- search symbol
-     * @param line -- search string
+     *
+     * @param forSearch -- a structure for storing and returning search indexes NB! the second index
+     *                  of the structure at the start will be assigned to the first index with the
+     *                  addition of one - this is the index from which the search will be performed
+     * @param symbol    -- search symbol
+     * @param line      -- search string
+     *
      * @return <true> -- if an unshielded character was found, <false> -- otherwise
-     *                  the second index of the "forSearch" structure corresponds
-     *                  to the index of the unshielded character.
-     *                  minus one -- the character was not found
+     * the second index of the "forSearch" structure corresponds to the index of the unshielded
+     * character. minus one -- the character was not found
      */
-    private boolean searchFirstUnescapedCharacter (Pair<Integer> forSearch, char symbol, String line) {
+    private boolean searchFirstUnescapedCharacter(Pair<Integer> forSearch, char symbol,
+                                                  String line) {
         boolean isFind;
         do {
             forSearch.first = forSearch.second + 1;
             forSearch.second = line.substring(forSearch.first).indexOf(symbol);
-            if(forSearch.second != -1) {
+            if (forSearch.second != -1) {
                 forSearch.second += forSearch.first;
                 isFind = !isEscaped(line.substring(forSearch.first, forSearch.second));
             } else {
@@ -101,12 +102,12 @@ public class Parser {
     }
     
     /**
-     * Checks if the substring has odd or even count of backslashes at the end. <br>
-     * Used to check if the symbol which follows after end of substring in the whole string is escaped or not
+     * Checks if the substring has odd or even count of backslashes at the end. <br> Used to check
+     * if the symbol which follows after end of substring in the whole string is escaped or not
      *
      * @param substring substring to check
-     * @return true if next symbol in the whole string is escaped  <br>
-     * false otherwise
+     *
+     * @return true if next symbol in the whole string is escaped  <br> false otherwise
      */
     private boolean isEscaped(String substring) {
         return getCountOfBackslashesAtTheEnd(substring) % 2 != 0;
@@ -116,6 +117,7 @@ public class Parser {
      * Counts the number of \ occurrences at the end of the string
      *
      * @param line string to check
+     *
      * @return number of \ occurrences
      */
     private int getCountOfBackslashesAtTheEnd(String line) {
@@ -131,6 +133,7 @@ public class Parser {
      * Replaces all paired backslashes with the single ones e.g. \\ will be replaces with \
      *
      * @param substring string in which need to do replace
+     *
      * @return string with all paired backslashes
      */
     private String replaceEvenCountOfBackslashesWithSingles(String substring) {
@@ -139,32 +142,27 @@ public class Parser {
             substring = substring.substring(0, substring.lastIndexOf("\\"));
         }
         return substring + (backslashesCount != 0 ?
-                String.join("\\", Collections.nCopies(backslashesCount / 2, "\\")) : "");
+                            String.join("\\", Collections.nCopies(backslashesCount / 2, "\\")) :
+                            "");
     }
     
     /**
-     * Removes the escaped backspace in front
-     * of special characters such as
-     * - '
-     * - "
-     * - $
-     * - |
+     * Removes the escaped backspace in front of special characters such as - ' - " - $ - |
+     *
      * @param line -- processing string
+     *
      * @return processed string
      */
     private String removingEscapingSlashForSpecialCharacters(String line) {
-        return line.replaceAll("\\\\'", "'")
-                .replaceAll("\\\\\"", "\"")
-                .replaceAll("\\\\\\$", "\\$")
-                .replaceAll("\\\\\\|", "|");
+        return line.replaceAll("\\\\'", "'").replaceAll("\\\\\"", "\"").replaceAll("\\\\\\$", "\\$")
+            .replaceAll("\\\\\\|", "|");
     }
     
     /**
-     * Replaces all double backspaces
-     * with single backspaces,
-     * also handles escaping wildcards
+     * Replaces all double backspaces with single backspaces, also handles escaping wildcards
      *
      * @param line -- processing string
+     *
      * @return processed string
      */
     private String removeUnnecessaryBackspaces(String line) {
@@ -172,7 +170,7 @@ public class Parser {
         int index;
         do {
             index = line.indexOf("\\\\");
-            if(index != -1) {
+            if (index != -1) {
                 result.append(removingEscapingSlashForSpecialCharacters(line.substring(0, index)));
                 int indexStrartFind = index;
                 do {
@@ -182,7 +180,7 @@ public class Parser {
                 line = line.substring(indexStrartFind);
             }
         } while (index != -1);
-        if(line.length() != 0) {
+        if (line.length() != 0) {
             result.append(removingEscapingSlashForSpecialCharacters(line));
         }
         return result.toString();
@@ -192,6 +190,7 @@ public class Parser {
      * Handling a substring before/between/after inverted quotes
      *
      * @param line -- processing string
+     *
      * @return processed string
      */
     private List<StringBuilder> substringProcessingWithoutQuotes(String line) {
@@ -201,7 +200,8 @@ public class Parser {
             if (isEscaped(piped[i])) {
                 String concat;
                 if (line.contains("|") && line.charAt(piped[i].length()) == '|') {
-                    concat = replaceEvenCountOfBackslashesWithSingles(piped[i]) + "|" + (i + 1 != piped.length ? piped[i + 1] : "");
+                    concat = replaceEvenCountOfBackslashesWithSingles(piped[i]) + "|" +
+                             (i + 1 != piped.length ? piped[i + 1] : "");
                     i++;
                 } else {
                     concat = replaceEvenCountOfBackslashesWithSingles(piped[i]);
@@ -216,7 +216,9 @@ public class Parser {
     
     /**
      * Processes a substring between double quotes
+     *
      * @param line -- processing string
+     *
      * @return processed substring
      */
     private Optional<String> doubleQuotesProcess(String line) {
@@ -227,40 +229,36 @@ public class Parser {
         // send everything inside the double quotes to substitute variables
         // the double quotes themselves will be deleted
         return doubleQuotesIndexes.second - doubleQuotesIndexes.first > 0 ?
-                Optional.of(String.valueOf(substitutionVariables(line, false))) : Optional.empty();
+               Optional.of(String.valueOf(substitutionVariables(line, false))) : Optional.empty();
     }
     
     /**
      * Processes a substring between single quotes
+     *
      * @param line -- processing string
+     *
      * @return processed substring
      */
     private Optional<String> singleQuotesProcess(String line) {
         toSearchIndexes.first = singleQuotesIndexes.first;
         toSearchIndexes.second = singleQuotesIndexes.second;
         quotesFlags.first = false;
-        return singleQuotesIndexes.second - singleQuotesIndexes.first > 0 ?
-                Optional.of(line.substring(singleQuotesIndexes.first + 1, singleQuotesIndexes.second - 1)) : Optional.empty();
+        return singleQuotesIndexes.second - singleQuotesIndexes.first > 0 ? Optional.of(
+            line.substring(singleQuotesIndexes.first + 1, singleQuotesIndexes.second - 1)) :
+               Optional.empty();
     }
     
     /**
-     * Removes unnecessary quotes and substitutes variables<p>
-     * If no variable is found, substitutes an empty string <br>
-     * While not end of string reached do:<br>
-     * 1. searches is there any single quotes in the substring <br>
-     * 2. searches is there any double quotes in the substring <br>
-     * 3. checks different situations if found two types of quotes:  <br>
-     * a) " ' ' " <br>
-     * b) ' " " ' <br>
-     * c) ' " ' " <br>
-     * d) " ' " ' <br>
-     * e) " " ' ' <br>
-     * f) ' ' " " <br>
-     * 4. checks different situations if found only one type of quotes: <br>
-     * a) if found only " " <br>
-     * b) if found only ' ' <br>
+     * Removes unnecessary quotes and substitutes variables<p> If no variable is found, substitutes
+     * an empty string <br> While not end of string reached do:<br> 1. searches is there any single
+     * quotes in the substring <br> 2. searches is there any double quotes in the substring <br> 3.
+     * checks different situations if found two types of quotes:  <br> a) " ' ' " <br> b) ' " " '
+     * <br> c) ' " ' " <br> d) " ' " ' <br> e) " " ' ' <br> f) ' ' " " <br> 4. checks different
+     * situations if found only one type of quotes: <br> a) if found only " " <br> b) if found only
+     * ' ' <br>
      *
      * @param line -- processing string
+     *
      * @return substitution string
      */
     public List<String> substitutor(String line) {
@@ -284,47 +282,56 @@ public class Parser {
             // both types of quotes are found
             if (quotesFlags.second && quotesFlags.first) {
                 // " ' ' " situation
-                if (doubleQuotesIndexes.first < singleQuotesIndexes.first
-                        && doubleQuotesIndexes.second > singleQuotesIndexes.second) {
-                    substitution = doubleQuotesProcess(line.substring(doubleQuotesIndexes.first + 1, doubleQuotesIndexes.second - 1));
+                if (doubleQuotesIndexes.first < singleQuotesIndexes.first &&
+                    doubleQuotesIndexes.second > singleQuotesIndexes.second) {
+                    substitution = doubleQuotesProcess(line.substring(doubleQuotesIndexes.first + 1,
+                        doubleQuotesIndexes.second - 1));
                     // discount all single quotes within double quotes
-                    quotesFlags.first = findQuotes(line, singleQuotesIndexes, '\'', doubleQuotesIndexes.second);
-                } else if ((singleQuotesIndexes.first < doubleQuotesIndexes.first
-                        && singleQuotesIndexes.second > doubleQuotesIndexes.second) /* ' " " ' situation */
-                        ||
-                        (singleQuotesIndexes.first < doubleQuotesIndexes.first /* ' " ' "  situation */
-                                && singleQuotesIndexes.second < doubleQuotesIndexes.second)) {
+                    quotesFlags.first =
+                        findQuotes(line, singleQuotesIndexes, '\'', doubleQuotesIndexes.second);
+                } else if ((singleQuotesIndexes.first < doubleQuotesIndexes.first &&
+                            singleQuotesIndexes.second >
+                            doubleQuotesIndexes.second) /* ' " " ' situation */ ||
+                           (singleQuotesIndexes.first <
+                            doubleQuotesIndexes.first /* ' " ' "  situation */ &&
+                            singleQuotesIndexes.second < doubleQuotesIndexes.second)) {
                     substitution = singleQuotesProcess(line);
                     // discount all double quotes inside single quotes
-                    quotesFlags.second = findQuotes(line, doubleQuotesIndexes, '\"', singleQuotesIndexes.second);
+                    quotesFlags.second =
+                        findQuotes(line, doubleQuotesIndexes, '\"', singleQuotesIndexes.second);
                 }
                 // incorrect quotes
                 else {
                     // " ' " '
-                    if (doubleQuotesIndexes.first < singleQuotesIndexes.first
-                            && doubleQuotesIndexes.second < singleQuotesIndexes.second) {
+                    if (doubleQuotesIndexes.first < singleQuotesIndexes.first &&
+                        doubleQuotesIndexes.second < singleQuotesIndexes.second) {
                         toSearchIndexes.first = doubleQuotesIndexes.first;
                         toSearchIndexes.second = doubleQuotesIndexes.second;
                         if (doubleQuotesIndexes.second - doubleQuotesIndexes.first > 0) {
-                            substitution = Optional.of(line.substring(doubleQuotesIndexes.first + 1, doubleQuotesIndexes.second - 1));
+                            substitution = Optional.of(line.substring(doubleQuotesIndexes.first + 1,
+                                doubleQuotesIndexes.second - 1));
                         }
                         // discount all single quotes within double quotes
-                        quotesFlags.first = findQuotes(line, singleQuotesIndexes, '\'', doubleQuotesIndexes.second);
+                        quotesFlags.first =
+                            findQuotes(line, singleQuotesIndexes, '\'', doubleQuotesIndexes.second);
                         // mark that the quotes have been processed
                         quotesFlags.second = false;
                     }
                     // if quotes does not intersect
                     else {
-                        substitution = doubleQuotesIndexes.first < singleQuotesIndexes.first ? /* " " ' ' situation */
-                                doubleQuotesProcess(line.substring(doubleQuotesIndexes.first + 1, doubleQuotesIndexes.second - 1))
-                                :
-                                singleQuotesProcess(line); // ' ' " " situation
+                        substitution = doubleQuotesIndexes.first <
+                                       singleQuotesIndexes.first ? /* " " ' ' situation */
+                                       doubleQuotesProcess(
+                                           line.substring(doubleQuotesIndexes.first + 1,
+                                               doubleQuotesIndexes.second - 1)) :
+                                       singleQuotesProcess(line); // ' ' " " situation
                     }
                 }
             }
             // only double quotes found
             else if (quotesFlags.second) {
-                substitution = doubleQuotesProcess(line.substring(doubleQuotesIndexes.first + 1, doubleQuotesIndexes.second - 1));
+                substitution = doubleQuotesProcess(
+                    line.substring(doubleQuotesIndexes.first + 1, doubleQuotesIndexes.second - 1));
             }
             // only single quotes found
             else if (quotesFlags.first) {
@@ -338,13 +345,15 @@ public class Parser {
             // if there is an unprocessed string between the current pattern found and the previous one
             // we need to substitute variables
             if (toSearchIndexes.first - startSubstring > 0) {
-                String substring = line.substring(startSubstring, toSearchIndexes.first).replaceAll(" +", " ");
+                String substring =
+                    line.substring(startSubstring, toSearchIndexes.first).replaceAll(" +", " ");
                 List<StringBuilder> piped = substringProcessingWithoutQuotes(substring);
                 
                 if (potentialCommands.size() == 0) {
                     potentialCommands.addAll(piped);
                 } else if (!isEndsWithPipe) {
-                    String concat = (potentialCommands.get(potentialCommands.size() - 1) + piped.get(0).toString()).trim();
+                    String concat = (potentialCommands.get(potentialCommands.size() - 1) +
+                                     piped.get(0).toString()).trim();
                     potentialCommands.remove(potentialCommands.size() - 1);
                     potentialCommands.add(new StringBuilder(concat));
                     if (piped.size() > 1) {
@@ -353,7 +362,8 @@ public class Parser {
                 }
                 isEndsWithPipe = substring.endsWith("|");
                 if (!isEndsWithPipe) {
-                    String concat = potentialCommands.get(potentialCommands.size() - 1) + substitution.orElse("");
+                    String concat = potentialCommands.get(potentialCommands.size() - 1) +
+                                    substitution.orElse("");
                     potentialCommands.remove(potentialCommands.size() - 1);
                     potentialCommands.add(new StringBuilder(concat));
                 } else {
@@ -373,8 +383,9 @@ public class Parser {
      * If the command is a variable initialisation/reinitialisation, it performs this
      *
      * @param parsedCommands list of parsed commands
-     * @return command name, flags and parameters if it is a command
-     * and an empty list if it is a variable initialisation/reinitialisation
+     *
+     * @return command name, flags and parameters if it is a command and an empty list if it is a
+     * variable initialisation/reinitialisation
      */
     public List<CommandInfo> commandParser(List<String> parsedCommands) {
         List<CommandInfo> commands = new ArrayList<>();
@@ -382,14 +393,19 @@ public class Parser {
             Matcher matcherVariableAddition = variableAddition.matcher(parsedCommand);
             if (matcherVariableAddition.find()) {
                 int indexEq = parsedCommand.indexOf("=");
-                localStorage.set(parsedCommand.substring(0, indexEq), parsedCommand.substring(indexEq + 1));
+                localStorage.set(parsedCommand.substring(0, indexEq),
+                    parsedCommand.substring(indexEq + 1));
             } else {
                 int index = parsedCommand.indexOf(" ");
                 if (index == -1) {
                     if (Checker.checkCommandIsInternal(parsedCommand)) {
-                        commands.add(new CommandInfo(Commands.valueOf(parsedCommand), new ArrayList<>(), new ArrayList<>()));
+                        commands.add(
+                            new CommandInfo(Commands.valueOf(parsedCommand), new ArrayList<>(),
+                                new ArrayList<>()));
                     } else {
-                        commands.add(new CommandInfo(Commands.valueOf("external"), List.of(parsedCommand),  new ArrayList<>()));
+                        commands.add(
+                            new CommandInfo(Commands.valueOf("external"), List.of(parsedCommand),
+                                new ArrayList<>()));
                     }
                 } else {
                     String name = parsedCommand.substring(0, index);
@@ -401,14 +417,16 @@ public class Parser {
                         index = 0;
                         while (matcherFlag.find()) {
                             if (matcherFlag.start() - index > 0) {
-                                List<String> all = List.of(newLine.substring(index, matcherFlag.start()).split(" +"));
+                                List<String> all = List.of(
+                                    newLine.substring(index, matcherFlag.start()).split(" +"));
                                 for (String s : all) {
                                     if (s.length() > 0) {
                                         param.add(s);
                                     }
                                 }
                             }
-                            flags.add(newLine.substring(matcherFlag.start(), matcherFlag.end()).replaceAll(" ", ""));
+                            flags.add(newLine.substring(matcherFlag.start(), matcherFlag.end())
+                                .replaceAll(" ", ""));
                             index = matcherFlag.end();
                         }
                         if (newLine.length() - index > 0) {
@@ -433,14 +451,15 @@ public class Parser {
     }
     
     /**
-     * Performs variable substitution
-     * If no variable is found, an empty string will be substituted for the default
+     * Performs variable substitution If no variable is found, an empty string will be substituted
+     * for the default
      *
-     * @param line -- substitution string
+     * @param line           -- substitution string
      * @param isDoubleQuotes -- <true> -- if the substring is enclosed in double quotes,
      *                       <false> -- otherwise
-     *                       This is necessary to understand whether
-     *                       double backspace cases need to be handled.
+     *                       This is necessary to understand whether double backspace cases need to
+     *                       be handled.
+     *
      * @return the line with the substitutions made
      */
     private StringBuilder substitutionVariables(String line, boolean isDoubleQuotes) {
@@ -451,10 +470,9 @@ public class Parser {
             String beforeDollar = line.substring(index, matcherVariables.start());
             if (!isEscaped(beforeDollar)) {
                 // add a line before the variable
-                if(isDoubleQuotes) {
+                if (isDoubleQuotes) {
                     result.append(removeUnnecessaryBackspaces(beforeDollar));
-                }
-                else {
+                } else {
                     result.append(beforeDollar);
                 }
                 String subline = line.substring(matcherVariables.start(), matcherVariables.end());
@@ -474,10 +492,10 @@ public class Parser {
                     index = line.length() - subline.length();
                 }
             } else {
-                if(isDoubleQuotes) {
-                    result.append(removeUnnecessaryBackspaces(line.substring(index, matcherVariables.end())));
-                }
-                else {
+                if (isDoubleQuotes) {
+                    result.append(
+                        removeUnnecessaryBackspaces(line.substring(index, matcherVariables.end())));
+                } else {
                     result.append(line.substring(index, matcherVariables.end()));
                 }
                 index = matcherVariables.end();
@@ -485,10 +503,9 @@ public class Parser {
         }
         if (line.length() - index > 0) {
             String substring = line.substring(index);
-            if(isDoubleQuotes) {
+            if (isDoubleQuotes) {
                 result.append(removeUnnecessaryBackspaces(substring));
-            }
-            else {
+            } else {
                 result.append(substring);
             }
         }

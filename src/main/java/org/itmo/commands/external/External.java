@@ -5,11 +5,10 @@ import org.itmo.exceptions.ExternalException;
 import org.itmo.utils.CommandInfo;
 import org.itmo.utils.CommandResultSaver;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.InputStreamReader;
+import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 public class External implements Command {
     
@@ -39,19 +38,21 @@ public class External implements Command {
                 builder.command("sh", "-c", name + " " + paramWithFlags);
             }
             builder.redirectInput(ProcessBuilder.Redirect.INHERIT);
-            builder.redirectOutput(ProcessBuilder.Redirect.INHERIT);
+            builder.redirectOutput(new File(CommandResultSaver.getPipeResultPath()));
 //          for cd - setting the start-up directory of the process
 //            builder.directory(new File("D:\\LINK"));
             Process process = builder.start();
-            BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream(),
-                    StandardCharsets.UTF_8));
+            BufferedReader reader = new BufferedReader(new FileReader(CommandResultSaver.getPipeResultPath()));
             BufferedReader readerError = new BufferedReader(new InputStreamReader(process.getErrorStream(),
                     StandardCharsets.UTF_8));
             String line;
-            process.waitFor();
-            while ((line = reader.readLine()) != null) {
-                CommandResultSaver.savePipeCommandResult(line);
-            }
+            do
+            {
+                process.waitFor(10, TimeUnit.NANOSECONDS);
+                while ((line = reader.readLine()) != null) {
+                    System.out.println(line);
+                }
+            } while (process.isAlive());
             if (process.exitValue() != 0) {
                 StringBuilder error = new StringBuilder();
                 while ((line = readerError.readLine()) != null) {

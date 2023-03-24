@@ -55,7 +55,7 @@ public class Cat implements Command {
                         if (flags.contains(CatFlags.N)) {
                             line.append("\t").append(1).append("\t\t");
                         }
-                        line.append(new Reader().readInput());
+                        line.append(new Reader().readInput().get());
                         if (flags.contains(CatFlags.E)) {
                             line.append("$");
                         }

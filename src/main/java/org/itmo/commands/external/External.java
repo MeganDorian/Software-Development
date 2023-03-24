@@ -5,7 +5,10 @@ import org.itmo.exceptions.ExternalException;
 import org.itmo.utils.CommandInfo;
 import org.itmo.utils.CommandResultSaver;
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
+import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -40,7 +43,6 @@ public class External implements Command {
             builder.redirectInput(ProcessBuilder.Redirect.INHERIT);
             builder.redirectOutput(new File(CommandResultSaver.getPipeResultPath()));
 //          for cd - setting the start-up directory of the process
-//            builder.directory(new File("D:\\LINK"));
             Process process = builder.start();
             BufferedReader reader = new BufferedReader(new FileReader(CommandResultSaver.getPipeResultPath()));
             BufferedReader readerError = new BufferedReader(new InputStreamReader(process.getErrorStream(),

@@ -10,6 +10,7 @@ import org.itmo.utils.CommandInfo;
 import org.itmo.utils.CommandResultSaver;
 
 import java.util.List;
+import java.util.Optional;
 
 public class Main {
     public static void main(String[] args) {
@@ -20,8 +21,12 @@ public class Main {
         List<CommandInfo> allCommands;
         do {
             System.out.print(">> ");
-            String command = reader.readInput();
-            allCommands = parser.commandParser(parser.substitutor(command));
+            Optional<String> command = reader.readInput();
+            if (command.isPresent()) {
+                allCommands = parser.commandParser(parser.substitutor(command.get()));
+            } else {
+                return;
+            }
             try {
                 checker.checkCommand(allCommands);
             } catch (FlagNotFoundException | CheckerException e) {

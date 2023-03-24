@@ -1,7 +1,8 @@
 package org.itmo.modules;
 
-import java.io.IOException;
 import java.io.InputStream;
+import java.util.Optional;
+import java.util.Scanner;
 
 public class Reader {
     
@@ -18,18 +19,14 @@ public class Reader {
     /**
      * Reads symbols from the input stream until meets END_SYMBOL
      */
-    public String readInput() {
+    public Optional<String> readInput() {
         StringBuilder line = new StringBuilder(100);
-        try {
-            String c = Character.toString((char)inputStream.read());
-            while (!c.equals(END_SYMBOL)) {
-                line.append(c);
-                c = Character.toString((char)inputStream.read());
-            }
-        } catch (IOException e) {
-            throw new RuntimeException(e);
+        Scanner scan = new Scanner(inputStream);
+        if (scan.hasNextLine()) {
+            return Optional.of(line.append(scan.nextLine()).toString().trim());
+        } else {
+            return Optional.empty();
         }
-        return line.toString().trim();
     }
     
 }

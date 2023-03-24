@@ -17,7 +17,7 @@ public class ReaderTests {
         System.setIn(forTests);
         
         Reader reader = new Reader();
-        String result = reader.readInput();
+        String result = reader.readInput().get();
         assertEquals(generatedString, result);
     }
 }

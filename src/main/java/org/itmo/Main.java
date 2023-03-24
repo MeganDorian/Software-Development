@@ -1,5 +1,7 @@
 package org.itmo;
 
+import java.util.List;
+import java.util.Optional;
 import org.itmo.exceptions.CheckerException;
 import org.itmo.exceptions.FlagNotFoundException;
 import org.itmo.modules.Checker;
@@ -8,9 +10,6 @@ import org.itmo.modules.Parser;
 import org.itmo.modules.Reader;
 import org.itmo.utils.CommandInfo;
 import org.itmo.utils.CommandResultSaver;
-
-import java.util.List;
-import java.util.Optional;
 
 public class Main {
     public static void main(String[] args) {

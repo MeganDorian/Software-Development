@@ -1,13 +1,12 @@
 package org.itmo.commands.pwd;
 
+import java.util.ArrayList;
+import java.util.List;
 import org.itmo.commands.Command;
 import org.itmo.commands.Commands;
 import org.itmo.utils.CommandInfo;
 import org.itmo.utils.CommandResultSaver;
 import org.itmo.utils.ResourcesLoader;
-
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * PWD command to print current directory
@@ -17,7 +16,8 @@ public class Pwd implements Command {
     
     public Pwd(CommandInfo commandInfo) {
         flags = new ArrayList<>();
-        commandInfo.getFlags().forEach(flag -> flags.add(PwdFlags.valueOf(flag.replaceAll("^-{1,2}", "").toUpperCase())));
+        commandInfo.getFlags().forEach(
+            flag -> flags.add(PwdFlags.valueOf(flag.replaceAll("^-{1,2}", "").toUpperCase())));
     }
     
     @Override

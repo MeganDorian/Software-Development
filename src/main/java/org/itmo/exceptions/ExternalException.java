@@ -1,6 +1,6 @@
 package org.itmo.exceptions;
 
-public class ExternalException extends Exception{
+public class ExternalException extends Exception {
     
     /**
      * Exceptions from external commands

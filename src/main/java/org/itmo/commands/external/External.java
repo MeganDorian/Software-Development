@@ -1,10 +1,5 @@
 package org.itmo.commands.external;
 
-import org.itmo.commands.Command;
-import org.itmo.exceptions.ExternalException;
-import org.itmo.utils.CommandInfo;
-import org.itmo.utils.CommandResultSaver;
-
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
@@ -12,6 +7,10 @@ import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import org.itmo.commands.Command;
+import org.itmo.exceptions.ExternalException;
+import org.itmo.utils.CommandInfo;
+import org.itmo.utils.CommandResultSaver;
 
 public class External implements Command {
     
@@ -44,12 +43,12 @@ public class External implements Command {
             builder.redirectOutput(new File(CommandResultSaver.getPipeResultPath()));
 //          for cd - setting the start-up directory of the process
             Process process = builder.start();
-            BufferedReader reader = new BufferedReader(new FileReader(CommandResultSaver.getPipeResultPath()));
-            BufferedReader readerError = new BufferedReader(new InputStreamReader(process.getErrorStream(),
-                    StandardCharsets.UTF_8));
+            BufferedReader reader =
+                new BufferedReader(new FileReader(CommandResultSaver.getPipeResultPath()));
+            BufferedReader readerError = new BufferedReader(
+                new InputStreamReader(process.getErrorStream(), StandardCharsets.UTF_8));
             String line;
-            do
-            {
+            do {
                 process.waitFor(10, TimeUnit.NANOSECONDS);
                 while ((line = reader.readLine()) != null) {
                     System.out.println(line);

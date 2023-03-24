@@ -34,7 +34,7 @@ public class CatTests {
                 .replaceAll("\r", "").replaceAll("\n", "");
     }
     
-    private void checkResult(String expected, CommandInfo info) {
+    private void checkResult(final String expected, final CommandInfo info) {
         Cat cat = new Cat(info);
         assertDoesNotThrow(cat::execute);
         CommandResultSaver.saveCommandResult();

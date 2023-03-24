@@ -63,13 +63,12 @@ public class Wc implements Command {
                 if (!file.exists() || !file.isFile()) {
                     throw new WcFileNotFoundException("Wc command did not found with  name " + fileName);
                 }
-                
                 try (BufferedReader reader = new BufferedReader(
                         new InputStreamReader(FileUtils.getFileAsStream(fileName), StandardCharsets.UTF_8))) {
                     String line = reader.readLine();
                     // if no temporary result in pipeResultFile, reads system input stream
                     if (line == null && fileName.equals(CommandResultSaver.getResultPath())) {
-                        line = new Reader().readInput();
+                        line = new Reader().readInput().get();
                         wordsCount.first = Arrays.stream(line.split(" ")).filter(v -> !v.equals("")).count();
                         byteCount.first = (long) line.getBytes(StandardCharsets.UTF_8).length;
                         write(1, wordsCount.first, byteCount.first, null, result);

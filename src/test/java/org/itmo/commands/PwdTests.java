@@ -9,8 +9,7 @@ import java.util.Collections;
 import java.util.List;
 import org.itmo.commands.pwd.Pwd;
 import org.itmo.utils.CommandInfo;
-import org.itmo.utils.CommandResultSaver;
-import org.itmo.utils.FileUtils;
+import org.itmo.utils.command.CommandResultSaver;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -18,8 +17,8 @@ import org.junit.jupiter.api.Test;
 public class PwdTests {
     
     @BeforeEach
-    public void setUp() throws IOException {
-        CommandResultSaver.createCommandResultFile();
+    public void setUp() {
+        CommandResultSaver.initStreams();
     }
     
     @Test
@@ -32,10 +31,9 @@ public class PwdTests {
     private void checkResult(String expected, CommandInfo info) {
         Pwd pwd = new Pwd(info);
         assertDoesNotThrow(pwd::execute);
-        CommandResultSaver.saveCommandResult();
         String actual =
-            FileUtils.loadFullContent(CommandResultSaver.getResult().toFile()).replaceAll("\r", "")
-                .replaceAll("\n", "");
+            new String(CommandResultSaver.getOutputStream().toByteArray()).replaceAll("\r", "")
+                                                                          .replaceAll("\n", "");
         assertEquals(expected, actual);
     }
     
@@ -49,7 +47,7 @@ public class PwdTests {
     }
     
     @AfterEach
-    public void cleanUp() {
-        CommandResultSaver.deleteCommandResult();
+    public void cleanUp() throws IOException {
+        CommandResultSaver.closeStreams();
     }
 }

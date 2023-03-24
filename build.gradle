@@ -13,6 +13,7 @@ repositories {
 }
 
 dependencies {
+    testImplementation 'org.projectlombok:lombok:1.18.22'
     compileOnly group: 'org.projectlombok', name: 'lombok', version: '1.18.26'
     annotationProcessor 'org.projectlombok:lombok:1.18.26'
 

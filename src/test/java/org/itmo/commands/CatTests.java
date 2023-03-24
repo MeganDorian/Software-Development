@@ -10,7 +10,6 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.PrintStream;
 import java.net.URISyntaxException;
 import java.util.Collections;
 import java.util.List;
@@ -18,45 +17,36 @@ import java.util.Objects;
 import org.itmo.commands.cat.Cat;
 import org.itmo.exceptions.CatFileNotFoundException;
 import org.itmo.utils.CommandInfo;
-import org.itmo.utils.CommandResultSaver;
 import org.itmo.utils.FileUtils;
+import org.itmo.utils.command.CommandResultSaver;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 public class CatTests {
-    static InputStream inputStream;
-    static PrintStream outputStream;
     
     @BeforeEach
-    public void setUp() throws IOException {
-        CommandResultSaver.createCommandResultFile();
-        CommandResultSaver.savePipeCommandResult("");
-        inputStream = System.in;
-        outputStream = System.out;
-    }
-    
-    @Test
-    public void shouldReadFromInputStream() {
-        CommandInfo info = new CommandInfo(Commands.cat, Collections.emptyList(),
-            List.of(CommandResultSaver.getResultPath()));
-        String expected = "test";
-        InputStream forTests = new ByteArrayInputStream((expected + "\n").getBytes());
-        System.setIn(forTests);
-        checkResult(expected, info);
+    public void setUp() {
+        CommandResultSaver.initStreams();
     }
     
     private void checkResult(final String expected, final CommandInfo info) {
         Cat cat = new Cat(info);
         assertDoesNotThrow(cat::execute);
-        CommandResultSaver.saveCommandResult();
-        String actual = loadResult();
+        String actual =
+            new String(CommandResultSaver.getOutputStream().toByteArray()).replaceAll("\r", "")
+                                                                          .replaceAll("\n", "");
         assertEquals(expected, actual);
     }
     
-    private String loadResult() {
-        return FileUtils.loadFullContent(CommandResultSaver.getResult().toFile())
-            .replaceAll("\r", "").replaceAll("\n", "");
+    @Test
+    public void shouldReadFromInputStream() {
+        CommandInfo info =
+            new CommandInfo(Commands.cat, Collections.emptyList(), Collections.emptyList());
+        String expected = "test";
+        InputStream forTests = new ByteArrayInputStream((expected + "\n").getBytes());
+        System.setIn(forTests);
+        checkResult(expected, info);
     }
     
     @Test
@@ -75,16 +65,17 @@ public class CatTests {
     public void shouldGetFilesContent() throws URISyntaxException {
         File file = new File(
             Objects.requireNonNull(this.getClass().getClassLoader().getResource("cat/cat1"))
-                .toURI());
+                   .toURI());
         File file2 = new File(
             Objects.requireNonNull(this.getClass().getClassLoader().getResource("cat/cat2"))
-                .toURI());
+                   .toURI());
         
         String expected = FileUtils.loadFullContent(file).replaceAll("\r", "").replaceAll("\n", "");
         expected += FileUtils.loadFullContent(file2).replaceAll("\r", "").replaceAll("\n", "");
         
         CommandInfo info = new CommandInfo(Commands.cat, Collections.emptyList(),
-            List.of(file.getAbsolutePath(), file2.getAbsolutePath()));
+                                           List.of(file.getAbsolutePath(),
+                                                   file2.getAbsolutePath()));
         checkResult(expected, info);
     }
     
@@ -92,14 +83,14 @@ public class CatTests {
     public void shouldGetFileContentWithFlags() throws URISyntaxException {
         File file = new File(
             Objects.requireNonNull(this.getClass().getClassLoader().getResource("cat/cat3"))
-                .toURI());
+                   .toURI());
         int lineCount = 1;
         StringBuilder content = new StringBuilder();
         try (BufferedReader reader = new BufferedReader(
             new InputStreamReader(FileUtils.getFileFromResource("cat/cat3")))) {
             while (reader.ready()) {
                 content.append("\t").append(lineCount).append("\t\t").append(reader.readLine())
-                    .append("$");
+                       .append("$");
                 lineCount++;
             }
         } catch (IOException e) {
@@ -120,9 +111,7 @@ public class CatTests {
     }
     
     @AfterEach
-    public void cleanUp() {
-        CommandResultSaver.deleteCommandResult();
-        System.setIn(inputStream);
-        System.setOut(outputStream);
+    public void cleanUp() throws IOException {
+        CommandResultSaver.closeStreams();
     }
 }

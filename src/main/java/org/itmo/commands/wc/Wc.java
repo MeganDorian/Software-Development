@@ -1,9 +1,11 @@
 package org.itmo.commands.wc;
 
+import static org.itmo.utils.command.CommandResultSaverFlags.APPEND_TO_OUTPUT;
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStreamReader;
+import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -14,10 +16,9 @@ import org.itmo.commands.Commands;
 import org.itmo.exceptions.WcFileNotFoundException;
 import org.itmo.modules.Reader;
 import org.itmo.utils.CommandInfo;
-import org.itmo.utils.CommandResultSaver;
 import org.itmo.utils.FileUtils;
 import org.itmo.utils.Pair;
-import org.itmo.utils.ResourcesLoader;
+import org.itmo.utils.command.CommandResultSaver;
 
 /**
  * WC command to count
@@ -52,55 +53,59 @@ public class Wc implements Command {
     }
     
     @Override
-    public void execute() throws WcFileNotFoundException {
-        if (!printHelp()) {
-            StringBuilder result = new StringBuilder();
-            boolean needTotalInfo = params.size() > 1;
-            for (String fileName : params) {
-                File file = new File(fileName);
-                if (!file.exists() || !file.isFile()) {
-                    throw new WcFileNotFoundException(
-                        "Wc command did not found with  name " + fileName);
-                }
-                try (BufferedReader reader = new BufferedReader(
-                    new InputStreamReader(FileUtils.getFileAsStream(fileName),
-                        StandardCharsets.UTF_8))) {
-                    String line = reader.readLine();
-                    // if no temporary result in pipeResultFile, reads system input stream
-                    if (line == null && fileName.equals(CommandResultSaver.getResultPath())) {
-                        line = new Reader().readInput().get();
-                        wordsCount.first =
-                            Arrays.stream(line.split(" ")).filter(v -> !v.equals("")).count();
-                        byteCount.first = (long) line.getBytes(StandardCharsets.UTF_8).length;
-                        write(1, wordsCount.first, byteCount.first, null, result);
-                        return;
-                    }
-                    
-                    while (line != null) {
-                        lineCount.first++;
-                        wordsCount.first +=
-                            Arrays.stream(line.split(" ")).filter(v -> !v.equals("")).count();
-                        byteCount.first += line.getBytes(StandardCharsets.UTF_8).length;
-                        line = reader.readLine();
-                    }
-                    write(lineCount.first, wordsCount.first, byteCount.first, fileName, result);
-                    result.delete(0, result.length());
-                    lineCount.second += lineCount.first;
-                    wordsCount.second += wordsCount.first;
-                    byteCount.second += byteCount.first;
-                    lineCount.first = wordsCount.first = byteCount.first = 0L;
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
-                }
+    public void execute() throws WcFileNotFoundException, IOException {
+        if (printHelp()) {
+            return;
+        }
+        
+        if (!params.isEmpty()) {
+            countFromFiles();
+            if (params.size() > 1) {
+                write(lineCount.second, wordsCount.second, byteCount.second, "total");
             }
-            if (needTotalInfo) {
-                write(lineCount.second, wordsCount.second, byteCount.second, "total", result);
-            }
+        }
+        // read from input stream
+        else if (CommandResultSaver.getInputStream().available() <= 0) {
+            String line = new Reader().readInput().get();
+            wordsCount.first = Arrays.stream(line.split(" ")).filter(v -> !v.equals("")).count();
+            byteCount.first = (long) line.getBytes(StandardCharsets.UTF_8).length;
+            write(1, wordsCount.first, byteCount.first, null);
+        } else {
+            readFromInputStream(CommandResultSaver.getInputStream(), null);
         }
     }
     
-    private void write(long lineCount, long wordsCount, long byteCount, String filename,
-                       StringBuilder result) {
+    private void readFromInputStream(InputStream stream, String fileName) throws IOException {
+        try (BufferedReader reader = getReader(stream)) {
+            while (reader.ready()) {
+                String line = reader.readLine();
+                lineCount.first++;
+                wordsCount.first +=
+                    Arrays.stream(line.split(" ")).filter(v -> !v.equals("")).count();
+                byteCount.first += line.getBytes(StandardCharsets.UTF_8).length;
+            }
+            write(lineCount.first, wordsCount.first, byteCount.first, fileName);
+            lineCount.second += lineCount.first;
+            wordsCount.second += wordsCount.first;
+            byteCount.second += byteCount.first;
+            lineCount.first = wordsCount.first = byteCount.first = 0L;
+        }
+    }
+    
+    private void countFromFiles() throws WcFileNotFoundException, IOException {
+        for (String fileName : params) {
+            File file = new File(fileName);
+            if (!file.exists() || !file.isFile()) {
+                throw new WcFileNotFoundException(
+                    "Wc command did not found with  name " + fileName);
+            }
+            readFromInputStream(FileUtils.getFileAsStream(fileName), fileName);
+        }
+    }
+    
+    private void write(long lineCount, long wordsCount, long byteCount, String filename)
+        throws IOException {
+        StringBuilder result = new StringBuilder();
         result.append("\t");
         if (flags.size() == 1) {
             if (flags.contains(WcFlags.L)) {
@@ -112,22 +117,21 @@ public class Wc implements Command {
             }
         } else if (flags.size() == 2) {
             result.append(flags.contains(WcFlags.L) ? lineCount + "\t\t" : "")
-                .append(flags.contains(WcFlags.W) ? wordsCount + "\t\t" : "")
-                .append(flags.contains(WcFlags.C) ? byteCount : "");
+                  .append(flags.contains(WcFlags.W) ? wordsCount + "\t\t" : "")
+                  .append(flags.contains(WcFlags.C) ? byteCount : "");
         } else {
             result.append(lineCount).append("\t\t").append(wordsCount).append("\t\t")
-                .append(byteCount);
+                  .append(byteCount);
         }
         Optional<String> file = Optional.ofNullable(filename);
         file.ifPresent(v -> result.append("\t\t").append(v));
-        CommandResultSaver.savePipeCommandResult(result.toString());
+        CommandResultSaver.writeToOutput(result + "\n", APPEND_TO_OUTPUT);
     }
     
     @Override
-    public boolean printHelp() {
+    public boolean printHelp() throws IOException {
         if (!flags.isEmpty() && (flags.contains(WcFlags.HELP) || flags.contains(WcFlags.H))) {
-            String helpFileName = ResourcesLoader.getProperty(Commands.wc + ".help");
-            CommandResultSaver.saveFullPipeCommandResult(helpFileName);
+            print(Commands.wc);
             return true;
         }
         return false;

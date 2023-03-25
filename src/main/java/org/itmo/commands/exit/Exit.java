@@ -2,7 +2,7 @@ package org.itmo.commands.exit;
 
 import java.io.IOException;
 import org.itmo.commands.Command;
-import org.itmo.utils.CommandResultSaver;
+import org.itmo.utils.command.CommandResultSaver;
 
 /**
  * EXIT command to exit from the cli
@@ -10,15 +10,13 @@ import org.itmo.utils.CommandResultSaver;
 public class Exit implements Command {
     
     /**
-     * Deletes temporary file for the command results and closes application
+     * Closes connected input and output streams
      *
      * @throws IOException if file deletion not successful
      */
     @Override
     public void execute() throws IOException {
-        if (!CommandResultSaver.deleteCommandResult()) {
-            throw new IOException("Can't delete temporary file");
-        }
+        CommandResultSaver.closeStreams();
     }
     
     @Override

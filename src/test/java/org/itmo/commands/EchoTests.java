@@ -9,17 +9,15 @@ import java.util.Collections;
 import java.util.List;
 import org.itmo.commands.echo.Echo;
 import org.itmo.utils.CommandInfo;
-import org.itmo.utils.CommandResultSaver;
-import org.itmo.utils.FileUtils;
+import org.itmo.utils.command.CommandResultSaver;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 public class EchoTests {
     @BeforeEach
-    public void setUp() throws IOException {
-        CommandResultSaver.createCommandResultFile();
-        CommandResultSaver.savePipeCommandResult("");
+    public void setUp() {
+        CommandResultSaver.initStreams();
     }
     
     @Test
@@ -29,24 +27,23 @@ public class EchoTests {
         checkResult("Obi Wan Kenobi", info);
     }
     
-    private void checkResult(String expected, CommandInfo info) {
-        Echo echo = new Echo(info);
-        assertDoesNotThrow(echo::execute);
-        CommandResultSaver.saveCommandResult();
-        String actual =
-            FileUtils.loadFullContent(CommandResultSaver.getResult().toFile()).replace("\r", "")
-                .replace("\n", "");
-        assertEquals(expected, actual);
-    }
-    
     @Test
     public void shouldPrintEmptyString() {
         CommandInfo info = new CommandInfo(echo, Collections.emptyList(), Collections.emptyList());
         checkResult("", info);
     }
     
+    private void checkResult(String expected, CommandInfo info) {
+        Echo echo = new Echo(info);
+        assertDoesNotThrow(echo::execute);
+        String actual =
+            new String(CommandResultSaver.getOutputStream().toByteArray()).replaceAll("\r", "")
+                                                                          .replaceAll("\n", "");
+        assertEquals(expected, actual);
+    }
+    
     @AfterEach
-    public void cleanUp() {
-        CommandResultSaver.deleteCommandResult();
+    public void cleanUp() throws IOException {
+        CommandResultSaver.closeStreams();
     }
 }

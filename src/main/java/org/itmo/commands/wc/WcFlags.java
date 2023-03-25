@@ -35,10 +35,11 @@ public enum WcFlags {
      * Checks if flag belongs to any supported wc flags
      *
      * @param flag name of flag to check
+     *
      * @return <b>true</b> if flag belongs to the supported WC flags <br>
      * <b>false</b> if not
      */
-    public static boolean isBelongs (String flag) {
+    public static boolean isBelongs(String flag) {
         try {
             PwdFlags.valueOf(flag.replaceAll("^-{1,2}", "").toUpperCase());
             return true;

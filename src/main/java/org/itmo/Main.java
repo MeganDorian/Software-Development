@@ -1,15 +1,17 @@
 package org.itmo;
 
+import java.io.IOException;
+import java.util.List;
+import java.util.Optional;
 import org.itmo.exceptions.CheckerException;
 import org.itmo.exceptions.FlagNotFoundException;
 import org.itmo.modules.Checker;
-import org.itmo.modules.Executor;
 import org.itmo.modules.Parser;
 import org.itmo.modules.Reader;
+import org.itmo.modules.executor.Executor;
+import org.itmo.modules.executor.ExecutorFlags;
 import org.itmo.utils.CommandInfo;
-import org.itmo.utils.CommandResultSaver;
-
-import java.util.List;
+import org.itmo.utils.command.CommandResultSaver;
 
 public class Main {
     public static void main(String[] args) {
@@ -20,15 +22,23 @@ public class Main {
         List<CommandInfo> allCommands;
         do {
             System.out.print(">> ");
-            String command = reader.readInput();
-            allCommands = parser.commandParser(parser.substitutor(command));
+            Optional<String> command = reader.readInput();
+            if (!command.isPresent()) {
+                return;
+            }
+            allCommands = parser.commandParser(parser.substitutor(command.get()));
             try {
                 checker.checkCommand(allCommands);
             } catch (FlagNotFoundException | CheckerException e) {
                 System.out.println(e.getCause().getMessage());
                 allCommands.clear();
             }
-        } while (executor.run(allCommands));
-        CommandResultSaver.deleteCommandResult();
+        } while (executor.run(allCommands) != ExecutorFlags.EXIT);
+        
+        try {
+            CommandResultSaver.closeStreams();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 }

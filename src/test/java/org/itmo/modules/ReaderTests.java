@@ -1,11 +1,10 @@
 package org.itmo.modules;
 
-import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import org.junit.jupiter.api.Test;
 
 
 public class ReaderTests {
@@ -17,7 +16,7 @@ public class ReaderTests {
         System.setIn(forTests);
         
         Reader reader = new Reader();
-        String result = reader.readInput();
+        String result = reader.readInput().get();
         assertEquals(generatedString, result);
     }
 }

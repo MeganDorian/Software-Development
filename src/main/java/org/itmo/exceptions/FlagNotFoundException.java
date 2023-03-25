@@ -12,7 +12,6 @@ public class FlagNotFoundException extends Exception {
     }
     
     /**
-     *
      * @param exception information on the exemption that has occurred
      */
     public FlagNotFoundException(Exception exception) {

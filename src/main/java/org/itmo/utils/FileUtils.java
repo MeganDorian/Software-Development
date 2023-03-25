@@ -1,13 +1,12 @@
 package org.itmo.utils;
 
-import lombok.experimental.UtilityClass;
-
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.RandomAccessFile;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import lombok.experimental.UtilityClass;
 
 /**
  * Utility class to work with files
@@ -19,6 +18,7 @@ public class FileUtils {
      * Load file from resources
      *
      * @param fileName file name to load
+     *
      * @return stream with content of loaded file
      */
     public InputStream getFileFromResource(String fileName) {
@@ -33,6 +33,7 @@ public class FileUtils {
      * Get InputStream of the file
      *
      * @param path absolute path to the file
+     *
      * @return InputStream of the file
      */
     public InputStream getFileAsStream(String path) {
@@ -49,6 +50,7 @@ public class FileUtils {
      * Loads content from the file. Use this if you sure that file isn't large
      *
      * @param f file to read
+     *
      * @return file content
      */
     public String loadFullContent(File f) {

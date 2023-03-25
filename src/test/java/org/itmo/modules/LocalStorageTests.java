@@ -13,7 +13,7 @@ public class LocalStorageTests {
     
     static Stream<? extends Arguments> argumentsForTestGetVariables() {
         return Stream.of(Arguments.of("x", "val", Optional.of("val")),
-            Arguments.of("y", "another value", Optional.of("another value")));
+                         Arguments.of("y", "another value", Optional.of("another value")));
     }
     
     @Test

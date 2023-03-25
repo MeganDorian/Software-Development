@@ -9,16 +9,9 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.List;
 import org.itmo.commands.Command;
-import org.itmo.commands.cat.Cat;
-import org.itmo.commands.echo.Echo;
-import org.itmo.commands.exit.Exit;
-import org.itmo.commands.external.External;
-import org.itmo.commands.pwd.Pwd;
-import org.itmo.commands.wc.Wc;
 import org.itmo.exceptions.CatFileNotFoundException;
 import org.itmo.exceptions.ExternalException;
 import org.itmo.exceptions.WcFileNotFoundException;
-import org.itmo.utils.CommandInfo;
 import org.itmo.utils.command.CommandResultSaver;
 
 public class Executor {
@@ -32,55 +25,23 @@ public class Executor {
     }
     
     /**
-     * Calls the corresponding constructor based on the command name and return created object <br>
-     * creates an instance of: <br> - cat; <br> - wc; <br> - echo; <br> - pwd; <br> - external.
-     * <br>
-     *
-     * @param commandInfo information about command
-     *
-     * @return created command object
-     */
-    private Command build(CommandInfo commandInfo) {
-        isNeedToPrintResult = true;
-        switch (commandInfo.getCommandName()) {
-            case cat: {
-                return new Cat(commandInfo);
-            }
-            case echo: {
-                return new Echo(commandInfo);
-            }
-            case pwd: {
-                return new Pwd(commandInfo);
-            }
-            case wc: {
-                return new Wc(commandInfo);
-            }
-            default: {
-                isNeedToPrintResult = false; // will be false if the last command was external
-                return new External(commandInfo);
-            }
-        }
-    }
-    
-    /**
      * Executes every command from the parsed list of commands
      *
      * @param allCommands the list of commands to execute
      *
      * @throws Exception if the command threw exception
      */
-    private void executeEachCommand(List<CommandInfo> allCommands) throws Exception {
+    private void executeEachCommand(List<Command> allCommands) throws Exception {
         if (allCommands.isEmpty()) {
             flag = CONTINUE;
         }
-        for (CommandInfo commandInfo : allCommands) {
-            if (commandInfo.getCommandName() == exit) {
-                new Exit().execute();
+        for (Command command : allCommands) {
+            if (command.getCommandName() == exit) {
+                command.execute();
                 flag = EXIT;
                 isNeedToPrintResult = false;
                 return;
             }
-            Command command = build(commandInfo);
             command.execute();
             CommandResultSaver.writeToInput();
             CommandResultSaver.clearOutput();
@@ -101,7 +62,7 @@ public class Executor {
         }
     }
     
-    public ExecutorFlags run(List<CommandInfo> allCommands) {
+    public ExecutorFlags run(List<Command> allCommands) {
         try {
             CommandResultSaver.clearOutput();
             executeEachCommand(allCommands);

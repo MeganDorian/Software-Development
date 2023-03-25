@@ -1,4 +1,4 @@
-package org.itmo.modules;
+package org.itmo.modules.parser;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -6,8 +6,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import org.itmo.commands.Commands;
-import org.itmo.utils.CommandInfo;
+import org.itmo.commands.Command;
+import org.itmo.modules.LocalStorage;
 import org.itmo.utils.Pair;
 
 /**
@@ -17,14 +17,13 @@ public class Parser {
     
     private final LocalStorage localStorage;
     private final Pattern variables;
-    private final Pattern variableAddition;
-    private final Pattern flag;
     
     private final Pair<Integer> singleQuotesIndexes;
     private final Pair<Integer> doubleQuotesIndexes;
     
     /**
-     * marks whether to look for the next occurrence of the pattern <br> first - found single quotes
+     * marks whether to look for the next occurrence of the pattern <br> first - found single
+     * quotes
      * <br> second - found double quotes
      */
     private final Pair<Boolean> quotesFlags;
@@ -38,8 +37,6 @@ public class Parser {
     public Parser() {
         localStorage = new LocalStorage();
         variables = Pattern.compile("\\$+[^$ ]+ *");
-        variableAddition = Pattern.compile("^[^ ]+=[^ ]*");
-        flag = Pattern.compile("-{1,2}[^- ]+ *");
         doubleQuotesIndexes = new Pair<>(-1, -1);
         singleQuotesIndexes = new Pair<>(-1, -1);
         toSearchIndexes = new Pair<>(-1, -1);
@@ -155,7 +152,7 @@ public class Parser {
      */
     private String removingEscapingSlashForSpecialCharacters(String line) {
         return line.replaceAll("\\\\'", "'").replaceAll("\\\\\"", "\"").replaceAll("\\\\\\$", "\\$")
-            .replaceAll("\\\\\\|", "|");
+                   .replaceAll("\\\\\\|", "|");
     }
     
     /**
@@ -249,13 +246,32 @@ public class Parser {
     }
     
     /**
-     * Removes unnecessary quotes and substitutes variables<p> If no variable is found, substitutes
-     * an empty string <br> While not end of string reached do:<br> 1. searches is there any single
-     * quotes in the substring <br> 2. searches is there any double quotes in the substring <br> 3.
-     * checks different situations if found two types of quotes:  <br> a) " ' ' " <br> b) ' " " '
-     * <br> c) ' " ' " <br> d) " ' " ' <br> e) " " ' ' <br> f) ' ' " " <br> 4. checks different
-     * situations if found only one type of quotes: <br> a) if found only " " <br> b) if found only
-     * ' ' <br>
+     * Removes unnecessary quotes and substitutes variables
+     * <p>
+     * If no variable is found, substitutes an empty string <br> While not end of string reached
+     * do:
+     * <p>
+     * 1. searches is there any single quotes in the substring 2. searches is there any double
+     * quotes in the substring 3. checks different situations if found two types of quotes:
+     * <p>
+     * a) " ' ' "
+     * <p>
+     * b) ' " " '
+     * <p>
+     * <p>
+     * c) ' " ' "
+     * <p>
+     * d) " ' " '
+     * <p>
+     * e) " " ' '
+     * <p>
+     * f) ' ' " "
+     * <p>
+     * 4. checks different situations if found only one type of quotes:
+     * <p>
+     * a) if found only " "
+     * <p>
+     * b) if found only ' '
      *
      * @param line -- processing string
      *
@@ -285,7 +301,8 @@ public class Parser {
                 if (doubleQuotesIndexes.first < singleQuotesIndexes.first &&
                     doubleQuotesIndexes.second > singleQuotesIndexes.second) {
                     substitution = doubleQuotesProcess(line.substring(doubleQuotesIndexes.first + 1,
-                        doubleQuotesIndexes.second - 1));
+                                                                      doubleQuotesIndexes.second -
+                                                                      1));
                     // discount all single quotes within double quotes
                     quotesFlags.first =
                         findQuotes(line, singleQuotesIndexes, '\'', doubleQuotesIndexes.second);
@@ -309,7 +326,8 @@ public class Parser {
                         toSearchIndexes.second = doubleQuotesIndexes.second;
                         if (doubleQuotesIndexes.second - doubleQuotesIndexes.first > 0) {
                             substitution = Optional.of(line.substring(doubleQuotesIndexes.first + 1,
-                                doubleQuotesIndexes.second - 1));
+                                                                      doubleQuotesIndexes.second -
+                                                                      1));
                         }
                         // discount all single quotes within double quotes
                         quotesFlags.first =
@@ -323,7 +341,7 @@ public class Parser {
                                        singleQuotesIndexes.first ? /* " " ' ' situation */
                                        doubleQuotesProcess(
                                            line.substring(doubleQuotesIndexes.first + 1,
-                                               doubleQuotesIndexes.second - 1)) :
+                                                          doubleQuotesIndexes.second - 1)) :
                                        singleQuotesProcess(line); // ' ' " " situation
                     }
                 }
@@ -377,77 +395,9 @@ public class Parser {
         return parsedCommand;
     }
     
-    /**
-     * Parses the string into commands
-     * <p>
-     * If the command is a variable initialisation/reinitialisation, it performs this
-     *
-     * @param parsedCommands list of parsed commands
-     *
-     * @return command name, flags and parameters if it is a command and an empty list if it is a
-     * variable initialisation/reinitialisation
-     */
-    public List<CommandInfo> commandParser(List<String> parsedCommands) {
-        List<CommandInfo> commands = new ArrayList<>();
-        for (String parsedCommand : parsedCommands) {
-            Matcher matcherVariableAddition = variableAddition.matcher(parsedCommand);
-            if (matcherVariableAddition.find()) {
-                int indexEq = parsedCommand.indexOf("=");
-                localStorage.set(parsedCommand.substring(0, indexEq),
-                    parsedCommand.substring(indexEq + 1));
-            } else {
-                int index = parsedCommand.indexOf(" ");
-                if (index == -1) {
-                    if (Checker.checkCommandIsInternal(parsedCommand)) {
-                        commands.add(
-                            new CommandInfo(Commands.valueOf(parsedCommand), new ArrayList<>(),
-                                new ArrayList<>()));
-                    } else {
-                        commands.add(
-                            new CommandInfo(Commands.valueOf("external"), List.of(parsedCommand),
-                                new ArrayList<>()));
-                    }
-                } else {
-                    String name = parsedCommand.substring(0, index);
-                    List<String> flags = new ArrayList<>();
-                    List<String> param = new ArrayList<>();
-                    String newLine = parsedCommand.substring(index + 1);
-                    if (Checker.checkCommandIsInternal(name)) {
-                        Matcher matcherFlag = flag.matcher(newLine);
-                        index = 0;
-                        while (matcherFlag.find()) {
-                            if (matcherFlag.start() - index > 0) {
-                                List<String> all = List.of(
-                                    newLine.substring(index, matcherFlag.start()).split(" +"));
-                                for (String s : all) {
-                                    if (s.length() > 0) {
-                                        param.add(s);
-                                    }
-                                }
-                            }
-                            flags.add(newLine.substring(matcherFlag.start(), matcherFlag.end())
-                                .replaceAll(" ", ""));
-                            index = matcherFlag.end();
-                        }
-                        if (newLine.length() - index > 0) {
-                            List<String> all = List.of(newLine.substring(index).split(" +"));
-                            for (String s : all) {
-                                if (s.length() > 0) {
-                                    param.add(s);
-                                }
-                            }
-                        }
-                        commands.add(new CommandInfo(Commands.valueOf(name), flags, param));
-                    } else {
-                        param.add(newLine);
-                        flags.add(name);
-                        commands.add(new CommandInfo(Commands.valueOf("external"), flags, param));
-                    }
-                }
-            }
-            
-        }
-        return commands;
+    
+    public List<Command> commandParser(List<String> parsedCommands) {
+        return new CommandParser(parsedCommands, localStorage).commandParser();
     }
     
     /**

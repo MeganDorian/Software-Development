@@ -2,29 +2,29 @@ package org.itmo.commands.pwd;
 
 import static org.itmo.utils.command.CommandResultSaverFlags.NOT_APPEND_TO_OUTPUT;
 
+import com.beust.jcommander.Parameter;
+import com.beust.jcommander.Parameters;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import org.itmo.commands.Command;
 import org.itmo.commands.Commands;
-import org.itmo.utils.CommandInfo;
 import org.itmo.utils.command.CommandResultSaver;
 
 /**
  * PWD command to print current directory
  */
+@Parameters(commandDescription = "PWD command to print current directory")
+@AllArgsConstructor
+@NoArgsConstructor
 public class Pwd implements Command {
-    private final List<PwdFlags> flags;
+    
+    @Parameter(names = {"--help", "-h"}, description = "display this help and exit", help = true)
+    private boolean help;
     
     @Getter
     private static String currentDirectory = System.getProperty("user.dir");
-    
-    public Pwd(CommandInfo commandInfo) {
-        flags = new ArrayList<>();
-        commandInfo.getFlags().forEach(
-            flag -> flags.add(PwdFlags.valueOf(flag.replaceAll("^-{1,2}", "").toUpperCase())));
-    }
     
     @Override
     public void execute() throws IOException {
@@ -36,10 +36,15 @@ public class Pwd implements Command {
     
     @Override
     public boolean printHelp() throws IOException {
-        if (!flags.isEmpty() && flags.contains(PwdFlags.HELP)) {
+        if (help) {
             print(Commands.pwd);
             return true;
         }
         return false;
+    }
+    
+    @Override
+    public Commands getCommandName() {
+        return Commands.pwd;
     }
 }

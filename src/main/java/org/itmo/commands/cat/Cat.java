@@ -2,33 +2,45 @@ package org.itmo.commands.cat;
 
 import static org.itmo.utils.command.CommandResultSaverFlags.APPEND_TO_OUTPUT;
 
+import com.beust.jcommander.Parameter;
+import com.beust.jcommander.Parameters;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.ArrayList;
 import java.util.List;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 import org.itmo.commands.Command;
 import org.itmo.commands.Commands;
 import org.itmo.exceptions.CatFileNotFoundException;
 import org.itmo.modules.Reader;
-import org.itmo.utils.CommandInfo;
 import org.itmo.utils.FileUtils;
 import org.itmo.utils.command.CommandResultSaver;
 
 /**
  * CAT command to work with file contents
  */
+@Parameters(
+    commandDescription = "Concatenate FILE(s) to standard output. With no FILE read standard input.")
+@AllArgsConstructor
+@NoArgsConstructor
 public class Cat implements Command {
-    private final List<CatFlags> flags;
-    private final List<String> params;
     
-    public Cat(CommandInfo commandInfo) {
-        flags = new ArrayList<>();
-        commandInfo.getFlags().forEach(
-            flag -> flags.add(CatFlags.valueOf(flag.replaceAll("^-{1,2}", "").toUpperCase())));
-        params = commandInfo.getParams();
-    }
+    @Getter
+    @Parameter(names = {"--E", "-e"}, description = "display $ at end of each line")
+    private boolean displayDollar;
+    @Getter
+    @Parameter(names = {"--N", "-n"}, description = "number all output lines")
+    private boolean numberOfLine;
+    @Getter
+    @Parameter(names = {"--help", "-h"}, description = "display this help and exit", help = true)
+    private boolean help;
+    @Getter
+    @Parameter(description = "list of files to output")
+    private List<String> files;
+    
     
     /**
      * If no parameters were passed to cat - reads one line from input stream otherwise - reads
@@ -42,10 +54,10 @@ public class Cat implements Command {
             return;
         }
         
-        if (!params.isEmpty()) {
+        if (!files.isEmpty()) {
             readContentFromFiles();
         }
-        // read from input stream
+        // read from system input stream
         else if (CommandResultSaver.getInputStream().available() <= 0) {
             writeToOutput(new Reader().readInput().get(), 1);
         }
@@ -63,7 +75,7 @@ public class Cat implements Command {
     
     private void readContentFromFiles() throws CatFileNotFoundException, IOException {
         int lineNumber = 1;
-        for (String fileName : params) {
+        for (String fileName : files) {
             File file = new File(fileName);
             if (!file.exists() || !file.isFile()) {
                 throw new CatFileNotFoundException(
@@ -84,19 +96,24 @@ public class Cat implements Command {
     }
     
     private String appendNumberOfLines(Integer lineNumber) {
-        return flags.contains(CatFlags.N) ? "\t" + lineNumber + "\t\t" : "";
+        return numberOfLine ? "\t" + lineNumber + "\t\t" : "";
     }
     
     private String appendDollarSymbol() {
-        return flags.contains(CatFlags.E) ? "$" : "";
+        return displayDollar ? "$" : "";
     }
     
     @Override
     public boolean printHelp() throws IOException {
-        if (!flags.isEmpty() && (flags.contains(CatFlags.HELP) || flags.contains(CatFlags.H))) {
-            print(Commands.cat);
+        if (help) {
+            print(getCommandName());
             return true;
         }
         return false;
+    }
+    
+    @Override
+    public Commands getCommandName() {
+        return Commands.cat;
     }
 }

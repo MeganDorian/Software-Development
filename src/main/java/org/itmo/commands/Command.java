@@ -32,4 +32,6 @@ public interface Command {
     default BufferedReader getReader(InputStream inputStream) {
         return new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8));
     }
+    
+    Commands getCommandName();
 }

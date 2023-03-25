@@ -1,6 +1,5 @@
 package org.itmo.commands;
 
-import static org.itmo.commands.Commands.wc;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -13,7 +12,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import org.itmo.commands.wc.Wc;
-import org.itmo.utils.CommandInfo;
 import org.itmo.utils.command.CommandResultSaver;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -25,8 +23,7 @@ public class WcTests {
         CommandResultSaver.initStreams();
     }
     
-    private void checkResult(String expected, CommandInfo info) {
-        Wc wc = new Wc(info);
+    private void checkResult(String expected, Wc wc) {
         assertDoesNotThrow(wc::execute);
         String actual =
             new String(CommandResultSaver.getOutputStream().toByteArray()).replaceAll("\r", "")
@@ -47,31 +44,29 @@ public class WcTests {
                           "  -l                - print the newline counts" +
                           "  -w                - print the word counts" +
                           "  --h, --help       - display this help and exit";
-        CommandInfo commandInfo = new CommandInfo(wc, List.of("-h"), Collections.emptyList());
-        
-        checkResult(expected, commandInfo);
+        Wc wc = new Wc(true, false, false, false, Collections.emptyList());
+        checkResult(expected, wc);
     }
     
     @Test
     public void shouldCountFromInputStream() {
-        CommandInfo info = new CommandInfo(wc, Collections.emptyList(),
-                                           Collections.emptyList());
+        Wc wc = new Wc(false, false, false, false, Collections.emptyList());
         String test = "the force awakens ! \\";
-        String expected = "\t1\t\t5\t\t21";
+        String expected = "\t1\t\t5\t\t21\t\t";
         InputStream forTests = new ByteArrayInputStream((test + "\n").getBytes());
         System.setIn(forTests);
-        checkResult(expected, info);
+        checkResult(expected, wc);
     }
     
     @Test
     public void shouldCountWithoutFlags() throws URISyntaxException {
         String file1 = getFilePath("wc/wc1");
         String file2 = getFilePath("wc/wc2");
-        CommandInfo info = new CommandInfo(wc, Collections.emptyList(), List.of(file1, file2));
+        Wc wc = new Wc(false, false, false, false, List.of(file1, file2));
         String expected = "\t5\t\t6\t\t31\t\t" + file1 + "\t4\t\t9\t\t50\t\t" + file2 +
                           "\t9\t\t15\t\t81\t\ttotal";
         
-        checkResult(expected, info);
+        checkResult(expected, wc);
     }
     
     private String getFilePath(String fileName) throws URISyntaxException {
@@ -83,19 +78,20 @@ public class WcTests {
     @Test
     public void shouldCountWithOneFlag() throws URISyntaxException {
         String file1 = getFilePath("wc/wc1");
-        CommandInfo info = new CommandInfo(wc, List.of("-c"), List.of(file1));
+        
+        Wc wc = new Wc(false, true, false, false, List.of(file1));
         String expected = "\t31\t\t" + file1;
         
-        checkResult(expected, info);
+        checkResult(expected, wc);
     }
     
     @Test
     public void shouldCountWithTwoFlag() throws URISyntaxException {
         String file1 = getFilePath("wc/wc1");
-        CommandInfo info = new CommandInfo(wc, List.of("-c", "-l"), List.of(file1));
+        Wc wc = new Wc(false, true, true, false, List.of(file1));
         String expected = "\t5\t\t31\t\t" + file1;
         
-        checkResult(expected, info);
+        checkResult(expected, wc);
     }
     
     @AfterEach

@@ -1,14 +1,17 @@
 package org.itmo.modules;
 
-import static org.itmo.commands.Commands.cat;
-import static org.itmo.commands.Commands.echo;
-import static org.itmo.commands.Commands.external;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Stream;
-import org.itmo.utils.CommandInfo;
+import org.itmo.commands.Command;
+import org.itmo.commands.Commands;
+import org.itmo.commands.cat.Cat;
+import org.itmo.commands.echo.Echo;
+import org.itmo.commands.external.External;
+import org.itmo.commands.grep.Grep;
+import org.itmo.modules.parser.Parser;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -16,17 +19,6 @@ import org.junit.jupiter.params.provider.MethodSource;
 public class ParserTests {
     
     private final Parser parser = new Parser();
-    
-    static Stream<? extends Arguments> commands() {
-        return Stream.of(Arguments.of(List.of("echo sffslk"),
-                new CommandInfo(echo, new ArrayList<>(), List.of("sffslk"))),
-            Arguments.of(List.of("cat -h smth"),
-                new CommandInfo(cat, List.of("-h"), List.of("smth"))),
-            Arguments.of(List.of("someCommand"),
-                new CommandInfo(external, List.of("someCommand"), new ArrayList<>())),
-            Arguments.of(List.of("cat --E some.txt get.txt"),
-                new CommandInfo(cat, List.of("--E"), List.of("some.txt", "get.txt"))));
-    }
     
     static Stream<? extends Arguments> testingDifferentStrings() {
         return Stream.of(
@@ -40,55 +32,90 @@ public class ParserTests {
             Arguments.of(List.of("this is \"a\" string"), "this 'is \"a'\" string"),
             Arguments.of(List.of("this is 'a' string"), "this \"is 'a\"' string"),
             Arguments.of(List.of("if \\\\this \\ is ' \\a  \\\\ | string $"),
-                "if \\\\\\this \\\\ is \\'    \\\\\"a  \\\\\" \\| string \\$ "));
+                         "if \\\\\\this \\\\ is \\'    \\\\\"a  \\\\\" \\| string \\$ "));
     }
     
     static Stream<? extends Arguments> pipes() {
         return Stream.of(Arguments.of("echo ds | cat ds", List.of("echo ds", "cat ds")),
-            Arguments.of("echo ds|cat ds", List.of("echo ds", "cat ds")),
-            Arguments.of("echo ds|", List.of("echo ds")),
-            Arguments.of("echo ds| ", List.of("echo ds")),
-            Arguments.of("echo ds\\| ", List.of("echo ds| ")),
-            Arguments.of("echo ds \\| cat", List.of("echo ds | cat")),
-            Arguments.of("echo ds \\\\| cat", List.of("echo ds \\", "cat")),
-            Arguments.of("echo 'ds |' cat", List.of("echo ds | cat")),
-            Arguments.of("echo \"ds |\" cat", List.of("echo ds | cat")),
-            Arguments.of("echo \"ds $|\" cat", List.of("echo ds  cat")),
-            Arguments.of("this is \"a\" string | this is 'a' string",
-                List.of("this is a string", "this is a string")));
+                         Arguments.of("echo ds|cat ds", List.of("echo ds", "cat ds")),
+                         Arguments.of("echo ds|", List.of("echo ds")),
+                         Arguments.of("echo ds| ", List.of("echo ds")),
+                         Arguments.of("echo ds\\| ", List.of("echo ds| ")),
+                         Arguments.of("echo ds \\| cat", List.of("echo ds | cat")),
+                         Arguments.of("echo ds \\\\| cat", List.of("echo ds \\", "cat")),
+                         Arguments.of("echo 'ds |' cat", List.of("echo ds | cat")),
+                         Arguments.of("echo \"ds |\" cat", List.of("echo ds | cat")),
+                         Arguments.of("echo \"ds $|\" cat", List.of("echo ds  cat")),
+                         Arguments.of("this is \"a\" string | this is 'a' string",
+                                      List.of("this is a string", "this is a string")));
     }
     
     static Stream<? extends Arguments> substitutes() {
         return Stream.of(Arguments.of(List.of("echo y"), "echo $x"),
-            Arguments.of(List.of("echo ==c"), "echo $a"),
-            Arguments.of(List.of("echo \\y"), "echo \\\\$x"),
-            Arguments.of(List.of("echo \\y $x"), "echo \\\\$x \\$x"),
-            Arguments.of(List.of("echo \\$x"), "echo \\\\\\$x"),
-            Arguments.of(List.of("echo $$x"), "echo $$x"),
-            Arguments.of(List.of("echo $$y y"), "echo $$$x $x"),
-            Arguments.of(List.of("echo y \\"), "echo $x \\\\"),
-            Arguments.of(List.of("y==c"), "$x$a"));
+                         Arguments.of(List.of("echo ==c"), "echo $a"),
+                         Arguments.of(List.of("echo \\y"), "echo \\\\$x"),
+                         Arguments.of(List.of("echo \\y $x"), "echo \\\\$x \\$x"),
+                         Arguments.of(List.of("echo \\$x"), "echo \\\\\\$x"),
+                         Arguments.of(List.of("echo $$x"), "echo $$x"),
+                         Arguments.of(List.of("echo $$y y"), "echo $$$x $x"),
+                         Arguments.of(List.of("echo y \\"), "echo $x \\\\"),
+                         Arguments.of(List.of("y==c"), "$x$a"));
     }
     
     static Stream<? extends Arguments> forInitialisingTest() {
         return Stream.of(Arguments.of("x", "some", "some"),
-            Arguments.of("x", "\"just   a   \\\\ string\"", "just a \\\\ string"),
-            Arguments.of("x", "'some string'", "some string"));
+                         Arguments.of("x", "\"just   a   \\\\ string\"", "just   a   \\\\ string"),
+                         Arguments.of("x", "'some string'", "some string"));
     }
     
-    @ParameterizedTest
-    @MethodSource("commands")
-    public void parseCommands(List<String> line, CommandInfo expected) {
-        CommandInfo commandInfo = parser.commandParser(line).get(0);
-        assertEquals(commandInfo.getCommandName(), expected.getCommandName());
-        assertEquals(expected.getFlags().size(), commandInfo.getFlags().size());
-        assertEquals(expected.getParams().size(), commandInfo.getParams().size());
-        for (int i = 0; i < expected.getFlags().size(); i++) {
-            assertEquals(commandInfo.getFlags().get(i), expected.getFlags().get(i));
-        }
-        for (int i = 0; i < expected.getParams().size(); i++) {
-            assertEquals(commandInfo.getParams().get(i), expected.getParams().get(i));
-        }
+    
+    private void checkCat(Cat expected, Cat actual) {
+        assertEquals(expected.getCommandName(), actual.getCommandName());
+        assertEquals(expected.isDisplayDollar(), actual.isDisplayDollar());
+        assertEquals(expected.isHelp(), actual.isHelp());
+        assertEquals(expected.isNumberOfLine(), actual.isNumberOfLine());
+        assertEquals(expected.getFiles(), actual.getFiles());
+    }
+    
+    @Test
+    public void shouldParseCat() {
+        List<String> toParse = List.of("cat -h   --E -n file1   file2", "cat --N");
+        Cat cat = (Cat) parser.commandParser(toParse).get(0);
+        checkCat(new Cat(true, true, true, List.of("file1", "file2")), cat);
+    }
+    
+    @Test
+    public void shouldParseEcho() {
+        List<String> toParse = List.of("echo something");
+        Echo echo = (Echo) parser.commandParser(toParse).get(0);
+        assertEquals(Commands.echo, echo.getCommandName());
+        assertEquals(List.of("something"), echo.getParamsToPrint());
+    }
+    
+    @Test
+    public void shouldParseExternal() {
+        List<String> toParse = List.of("someCommand with parameters");
+        External external = (External) parser.commandParser(toParse).get(0);
+        assertEquals(Commands.external, external.getCommandName());
+        assertEquals(List.of("someCommand", "with", "parameters"), external.getParams());
+    }
+    
+    private void checkGrep(Grep expected, Grep actual) {
+        assertEquals(expected.getCommandName(), actual.getCommandName());
+        assertEquals(expected.isSearchFullWord(), actual.isSearchFullWord());
+        assertEquals(expected.isCaseInsensitive(), actual.isCaseInsensitive());
+        assertEquals(expected.getLineCountToPrint(), actual.getLineCountToPrint());
+        assertEquals(expected.getPatternAndFiles(), actual.getPatternAndFiles());
+    }
+    
+    @Test
+    public void shouldParseGrep() {
+        List<String> toParse =
+            List.of("grep -i pattern file1 file2", "grep -w pattern -A 10 " + "file1");
+        List<Command> commands = parser.commandParser(toParse);
+        checkGrep(new Grep(false, true, 0, List.of("pattern", "file1", "file2")),
+                  (Grep) commands.get(0));
+        checkGrep(new Grep(true, false, 10, List.of("pattern", "file1")), (Grep) commands.get(1));
     }
     
     @ParameterizedTest
@@ -127,8 +154,8 @@ public class ParserTests {
     @MethodSource("forInitialisingTest")
     public void initialisingTest(String name, String value, String expect) {
         parser.commandParser(parser.substitutor(name + "=" + value));
-        List<CommandInfo> commands = parser.commandParser(parser.substitutor("echo $" + name));
-        assertEquals(expect, String.join(" ", commands.get(0).getParams()));
+        Echo echo = (Echo) parser.commandParser(parser.substitutor("echo $" + name)).get(0);
+        assertEquals(expect, String.join(" ", echo.getParamsToPrint()));
     }
     
 }

@@ -2,20 +2,22 @@ package org.itmo.commands.wc;
 
 import static org.itmo.utils.command.CommandResultSaverFlags.APPEND_TO_OUTPUT;
 
+import com.beust.jcommander.Parameter;
+import com.beust.jcommander.Parameters;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+import lombok.AllArgsConstructor;
+import lombok.NoArgsConstructor;
 import org.itmo.commands.Command;
 import org.itmo.commands.Commands;
 import org.itmo.exceptions.WcFileNotFoundException;
 import org.itmo.modules.Reader;
-import org.itmo.utils.CommandInfo;
 import org.itmo.utils.FileUtils;
 import org.itmo.utils.Pair;
 import org.itmo.utils.command.CommandResultSaver;
@@ -23,34 +25,40 @@ import org.itmo.utils.command.CommandResultSaver;
 /**
  * WC command to count
  */
+@Parameters(commandDescription = "WC command to count")
+@AllArgsConstructor
+@NoArgsConstructor
 public class Wc implements Command {
-    private final List<WcFlags> flags;
-    private final List<String> params;
+    
+    @Parameter(names = {"--help", "-h"}, description = "display this help and exit", help = true)
+    private boolean help;
+    
+    @Parameter(names = "-c", description = "byte count")
+    private boolean byteCountOnly;
+    
+    @Parameter(names = "-l", description = "line count")
+    private boolean lineCountOnly;
+    
+    @Parameter(names = "-w", description = "words count")
+    private boolean wordsCountOnly;
+    
+    @Parameter(description = "files to count")
+    private List<String> params;
     
     /**
      * Count of lines <br> first - count in for the current parameter <br> second - count in total
      */
-    private final Pair<Long> lineCount;
+    private final Pair<Long> lineCount = new Pair<>(0L, 0L);
     
     /**
      * Count of word <br> first - count in for the current parameter <br> second - count in total
      */
-    private final Pair<Long> wordsCount;
+    private final Pair<Long> wordsCount = new Pair<>(0L, 0L);
     
     /**
      * Count of bytes <br> first - count in for the current parameter <br> second - count in total
      */
-    private final Pair<Long> byteCount;
-    
-    public Wc(CommandInfo commandInfo) {
-        flags = new ArrayList<>();
-        commandInfo.getFlags().forEach(
-            flag -> flags.add(WcFlags.valueOf(flag.replaceAll("^-{1,2}", "").toUpperCase())));
-        params = commandInfo.getParams();
-        lineCount = new Pair<>(0L, 0L);
-        wordsCount = new Pair<>(0L, 0L);
-        byteCount = new Pair<>(0L, 0L);
-    }
+    private final Pair<Long> byteCount = new Pair<>(0L, 0L);
     
     @Override
     public void execute() throws WcFileNotFoundException, IOException {
@@ -107,33 +115,30 @@ public class Wc implements Command {
         throws IOException {
         StringBuilder result = new StringBuilder();
         result.append("\t");
-        if (flags.size() == 1) {
-            if (flags.contains(WcFlags.L)) {
-                result.append(lineCount);
-            } else if (flags.contains(WcFlags.W)) {
-                result.append(wordsCount);
-            } else if (flags.contains(WcFlags.C)) {
-                result.append(byteCount);
-            }
-        } else if (flags.size() == 2) {
-            result.append(flags.contains(WcFlags.L) ? lineCount + "\t\t" : "")
-                  .append(flags.contains(WcFlags.W) ? wordsCount + "\t\t" : "")
-                  .append(flags.contains(WcFlags.C) ? byteCount : "");
-        } else {
+        if (!lineCountOnly && !wordsCountOnly && !byteCountOnly) {
             result.append(lineCount).append("\t\t").append(wordsCount).append("\t\t")
-                  .append(byteCount);
+                  .append(byteCount).append("\t\t");
+        } else {
+            result.append(lineCountOnly ? lineCount + "\t\t" : "")
+                  .append(wordsCountOnly ? wordsCount + "\t\t" : "")
+                  .append(byteCountOnly ? byteCount + "\t\t" : "");
         }
         Optional<String> file = Optional.ofNullable(filename);
-        file.ifPresent(v -> result.append("\t\t").append(v));
+        file.ifPresent(result::append);
         CommandResultSaver.writeToOutput(result + "\n", APPEND_TO_OUTPUT);
     }
     
     @Override
     public boolean printHelp() throws IOException {
-        if (!flags.isEmpty() && (flags.contains(WcFlags.HELP) || flags.contains(WcFlags.H))) {
+        if (help) {
             print(Commands.wc);
             return true;
         }
         return false;
+    }
+    
+    @Override
+    public Commands getCommandName() {
+        return Commands.wc;
     }
 }

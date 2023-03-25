@@ -16,7 +16,6 @@ import java.util.List;
 import java.util.Objects;
 import org.itmo.commands.cat.Cat;
 import org.itmo.exceptions.CatFileNotFoundException;
-import org.itmo.utils.CommandInfo;
 import org.itmo.utils.FileUtils;
 import org.itmo.utils.command.CommandResultSaver;
 import org.junit.jupiter.api.AfterEach;
@@ -30,8 +29,7 @@ public class CatTests {
         CommandResultSaver.initStreams();
     }
     
-    private void checkResult(final String expected, final CommandInfo info) {
-        Cat cat = new Cat(info);
+    private void checkResult(final String expected, final Cat cat) {
         assertDoesNotThrow(cat::execute);
         String actual =
             new String(CommandResultSaver.getOutputStream().toByteArray()).replaceAll("\r", "")
@@ -41,12 +39,11 @@ public class CatTests {
     
     @Test
     public void shouldReadFromInputStream() {
-        CommandInfo info =
-            new CommandInfo(Commands.cat, Collections.emptyList(), Collections.emptyList());
+        Cat cat = new Cat(false, false, false, Collections.emptyList());
         String expected = "test";
         InputStream forTests = new ByteArrayInputStream((expected + "\n").getBytes());
         System.setIn(forTests);
-        checkResult(expected, info);
+        checkResult(expected, cat);
     }
     
     @Test
@@ -56,9 +53,8 @@ public class CatTests {
                           "-e              - display $ at end of each line    " +
                           "-n              - number all output lines    " +
                           "--h, --help     - display this help and exit";
-        CommandInfo info =
-            new CommandInfo(Commands.cat, List.of("--help"), Collections.emptyList());
-        checkResult(expected, info);
+        Cat cat = new Cat(false, false, true, Collections.emptyList());
+        checkResult(expected, cat);
     }
     
     @Test
@@ -73,10 +69,9 @@ public class CatTests {
         String expected = FileUtils.loadFullContent(file).replaceAll("\r", "").replaceAll("\n", "");
         expected += FileUtils.loadFullContent(file2).replaceAll("\r", "").replaceAll("\n", "");
         
-        CommandInfo info = new CommandInfo(Commands.cat, Collections.emptyList(),
-                                           List.of(file.getAbsolutePath(),
-                                                   file2.getAbsolutePath()));
-        checkResult(expected, info);
+        Cat cat =
+            new Cat(false, false, false, List.of(file.getAbsolutePath(), file2.getAbsolutePath()));
+        checkResult(expected, cat);
     }
     
     @Test
@@ -97,16 +92,13 @@ public class CatTests {
             throw new RuntimeException(e);
         }
         
-        CommandInfo info =
-            new CommandInfo(Commands.cat, List.of("-e", "-n"), List.of(file.getAbsolutePath()));
-        checkResult(content.toString(), info);
+        Cat cat = new Cat(true, true, false, List.of(file.getAbsolutePath()));
+        checkResult(content.toString(), cat);
     }
     
     @Test
     public void shouldThrowFileNotFoundException() {
-        CommandInfo info =
-            new CommandInfo(Commands.cat, List.of("-e", "-n"), List.of("hello there"));
-        Cat cat = new Cat(info);
+        Cat cat = new Cat(true, true, false, List.of("hello there"));
         assertThrows(CatFileNotFoundException.class, cat::execute);
     }
     

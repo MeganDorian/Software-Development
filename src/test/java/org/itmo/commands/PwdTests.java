@@ -1,14 +1,10 @@
 package org.itmo.commands;
 
-import static org.itmo.commands.Commands.pwd;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.io.IOException;
-import java.util.Collections;
-import java.util.List;
 import org.itmo.commands.pwd.Pwd;
-import org.itmo.utils.CommandInfo;
 import org.itmo.utils.command.CommandResultSaver;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -23,13 +19,11 @@ public class PwdTests {
     
     @Test
     public void shouldGetCurrentWorkingDirectory() {
-        CommandInfo commandInfo =
-            new CommandInfo(pwd, Collections.emptyList(), Collections.emptyList());
-        checkResult(System.getProperty("user.dir"), commandInfo);
+        Pwd pwd = new Pwd(false);
+        checkResult(System.getProperty("user.dir"), pwd);
     }
     
-    private void checkResult(String expected, CommandInfo info) {
-        Pwd pwd = new Pwd(info);
+    private void checkResult(String expected, Pwd pwd) {
         assertDoesNotThrow(pwd::execute);
         String actual =
             new String(CommandResultSaver.getOutputStream().toByteArray()).replaceAll("\r", "")
@@ -39,11 +33,11 @@ public class PwdTests {
     
     @Test
     public void shouldGetHelp() {
+        Pwd pwd = new Pwd(true);
         String expected =
             "pwd:" + "    Print the name of the current working directory." + "    Options:" +
             "      --help    - display this help and exit";
-        CommandInfo commandInfo = new CommandInfo(pwd, List.of("--help"), Collections.emptyList());
-        checkResult(expected, commandInfo);
+        checkResult(expected, pwd);
     }
     
     @AfterEach

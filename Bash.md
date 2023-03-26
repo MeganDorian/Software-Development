@@ -270,8 +270,6 @@ $x$y
 
 ### Взаимодействие модулей и команд
 
-![Class diagram checker](diagrams/classDiagramChecker.png)
-
 ![Class diagram executor](diagrams/classDiagramExecutor.png)
 
 ### Описание структуры
@@ -344,7 +342,7 @@ $x$y
 
 ### CLAJR
 
-[Документация](https://clajr.sourceforge.net/)K
+[Документация](https://clajr.sourceforge.net/)
 
 Минусы:
 

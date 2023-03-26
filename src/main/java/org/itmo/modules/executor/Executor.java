@@ -11,6 +11,7 @@ import java.util.List;
 import org.itmo.commands.Command;
 import org.itmo.exceptions.CatFileNotFoundException;
 import org.itmo.exceptions.ExternalException;
+import org.itmo.exceptions.GrepException;
 import org.itmo.exceptions.WcFileNotFoundException;
 import org.itmo.utils.command.CommandResultSaver;
 
@@ -69,7 +70,8 @@ public class Executor {
             if (isNeedToPrintResult) {
                 loadAndPrintCommandResult();
             }
-        } catch (CatFileNotFoundException | WcFileNotFoundException | ExternalException e) {
+        } catch (CatFileNotFoundException | WcFileNotFoundException | ExternalException |
+                 GrepException e) {
             System.out.println(e.getMessage());
         } catch (IOException e) {
             throw new RuntimeException(e);

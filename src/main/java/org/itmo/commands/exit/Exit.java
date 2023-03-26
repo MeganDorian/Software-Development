@@ -1,29 +1,39 @@
 package org.itmo.commands.exit;
 
-import org.itmo.commands.Command;
-import org.itmo.utils.CommandResultSaver;
-
+import com.beust.jcommander.Parameter;
+import com.beust.jcommander.Parameters;
 import java.io.IOException;
+import java.util.List;
+import org.itmo.commands.Command;
+import org.itmo.commands.Commands;
+import org.itmo.utils.command.CommandResultSaver;
 
 /**
  * EXIT command to exit from the cli
  */
+@Parameters(commandDescription = "EXIT command to exit from the cli")
 public class Exit implements Command {
     
+    @Parameter(description = "empty parameters")
+    private List<String> params;
+    
     /**
-     * Deletes temporary file for the command results and closes application
+     * Closes connected input and output streams
      *
      * @throws IOException if file deletion not successful
      */
     @Override
     public void execute() throws IOException {
-        if (!CommandResultSaver.deleteCommandResult()) {
-            throw new IOException("Can't delete temporary file");
-        }
+        CommandResultSaver.closeStreams();
     }
     
     @Override
     public boolean printHelp() {
         return false;
+    }
+    
+    @Override
+    public Commands getCommandName() {
+        return Commands.exit;
     }
 }

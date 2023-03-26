@@ -1,39 +1,54 @@
 package org.itmo.commands.pwd;
 
+import static org.itmo.utils.command.CommandResultSaverFlags.NOT_APPEND_TO_OUTPUT;
+
+import com.beust.jcommander.Parameter;
+import com.beust.jcommander.Parameters;
+import java.io.IOException;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 import org.itmo.commands.Command;
 import org.itmo.commands.Commands;
-import org.itmo.utils.CommandInfo;
-import org.itmo.utils.CommandResultSaver;
-import org.itmo.utils.ResourcesLoader;
-
-import java.util.ArrayList;
-import java.util.List;
+import org.itmo.utils.command.CommandResultSaver;
 
 /**
  * PWD command to print current directory
  */
+@Parameters(commandDescription = "PWD command to print current directory")
+@AllArgsConstructor
+@NoArgsConstructor
 public class Pwd implements Command {
-    private final List<PwdFlags> flags;
     
-    public Pwd(CommandInfo commandInfo) {
-        flags = new ArrayList<>();
-        commandInfo.getFlags().forEach(flag -> flags.add(PwdFlags.valueOf(flag.replaceAll("^-{1,2}", "").toUpperCase())));
-    }
+    @Parameter(names = {"--help", "-h"}, description = "display this help and exit", help = true)
+    private boolean help;
     
+    @Getter
+    private static String currentDirectory = System.getProperty("user.dir");
+    
+    /**
+     * Executes pwd command
+     * @throws IOException if unable to write to the common output stream
+     */
     @Override
-    public void execute() {
-        if (!printHelp()) {
-            CommandResultSaver.savePipeCommandResult(System.getProperty("user.dir"));
+    public void execute() throws IOException {
+        if (printHelp()) {
+            return;
         }
+        CommandResultSaver.writeToOutput(currentDirectory, NOT_APPEND_TO_OUTPUT);
     }
     
     @Override
-    public boolean printHelp() {
-        if (!flags.isEmpty() && flags.contains(PwdFlags.HELP)) {
-            String helpFileName = ResourcesLoader.getProperty(Commands.pwd + ".help");
-            CommandResultSaver.saveFullPipeCommandResult(helpFileName);
+    public boolean printHelp() throws IOException {
+        if (help) {
+            print(Commands.pwd);
             return true;
         }
         return false;
+    }
+    
+    @Override
+    public Commands getCommandName() {
+        return Commands.pwd;
     }
 }

@@ -8,6 +8,7 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -39,7 +40,7 @@ public class Cat implements Command {
     private boolean help;
     @Getter
     @Parameter(description = "list of files to output")
-    private List<String> files;
+    private List<String> files = new ArrayList<>();
     
     
     /**

@@ -9,6 +9,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -43,7 +44,7 @@ public class Wc implements Command {
     private boolean wordsCountOnly;
     
     @Parameter(description = "files to count")
-    private List<String> params;
+    private List<String> params = new ArrayList<>();
     
     /**
      * Count of lines <br> first - count in for the current parameter <br> second - count in total

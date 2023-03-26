@@ -6,6 +6,7 @@ import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import lombok.AllArgsConstructor;
@@ -25,7 +26,7 @@ public class External implements Command {
     
     @Getter
     @Parameter(description = "full external command with flags")
-    private List<String> params;
+    private List<String> params = new ArrayList<>();
     
     private final boolean isWindows;
     

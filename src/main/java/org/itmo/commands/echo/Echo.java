@@ -6,6 +6,7 @@ import static org.itmo.utils.command.CommandResultSaverFlags.NOT_APPEND_TO_OUTPU
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -26,7 +27,7 @@ public class Echo implements Command {
      */
     @Getter
     @Parameter(description = "content to print")
-    private List<String> paramsToPrint;
+    private List<String> paramsToPrint = new ArrayList<>();
     
     /**
      * Prints content. If no content was passed to the command, prints empty string

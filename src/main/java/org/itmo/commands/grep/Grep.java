@@ -8,6 +8,7 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.regex.Matcher;
@@ -40,7 +41,7 @@ public class Grep implements Command {
     private Integer lineCountToPrint = 0;
     @Getter
     @Parameter(description = "The list of files to search in")
-    private List<String> patternAndFiles;
+    private List<String> patternAndFiles = new ArrayList<>();
     
     /**
      * Executes grep command

@@ -5,6 +5,7 @@ import org.itmo.exceptions.CatFileNotFoundException;
 import org.itmo.utils.CommandInfo;
 import org.itmo.utils.CommandResultSaver;
 import org.itmo.utils.FileUtils;
+import org.itmo.utils.FileUtilsForTest;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -30,7 +31,7 @@ public class CatTests {
     }
     
     private String loadResult() {
-        return FileUtils.loadFullContent(CommandResultSaver.getResult().toFile())
+        return FileUtilsForTest.loadFullContent(CommandResultSaver.getResult().toFile())
                 .replaceAll("\r", "").replaceAll("\n", "");
     }
     
@@ -64,8 +65,8 @@ public class CatTests {
         File file = new File(Objects.requireNonNull(this.getClass().getClassLoader().getResource("cat/cat1")).toURI());
         File file2 = new File(Objects.requireNonNull(this.getClass().getClassLoader().getResource("cat/cat2")).toURI());
         
-        String expected = FileUtils.loadFullContent(file).replaceAll("\r", "").replaceAll("\n", "");
-        expected += FileUtils.loadFullContent(file2).replaceAll("\r", "").replaceAll("\n", "");
+        String expected = FileUtilsForTest.loadFullContent(file).replaceAll("\r", "").replaceAll("\n", "");
+        expected += FileUtilsForTest.loadFullContent(file2).replaceAll("\r", "").replaceAll("\n", "");
         
         CommandInfo info = new CommandInfo(Commands.cat, Collections.emptyList(), List.of(file.getAbsolutePath(), file2.getAbsolutePath()));
         checkResult(expected, info);

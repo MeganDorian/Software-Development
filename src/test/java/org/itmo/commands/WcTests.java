@@ -3,7 +3,7 @@ package org.itmo.commands;
 import org.itmo.commands.wc.Wc;
 import org.itmo.utils.CommandInfo;
 import org.itmo.utils.CommandResultSaver;
-import org.itmo.utils.FileUtils;
+import org.itmo.utils.FileUtilsForTest;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -37,7 +37,7 @@ public class WcTests {
         Wc wc = new Wc(info);
         assertDoesNotThrow(wc::execute);
         CommandResultSaver.saveCommandResult();
-        String actual = FileUtils.loadFullContent(CommandResultSaver.getResult().toFile())
+        String actual = FileUtilsForTest.loadFullContent(CommandResultSaver.getResult().toFile())
                 .replace("\r", "").replace("\n", "");
         assertEquals(expected, actual);
     }

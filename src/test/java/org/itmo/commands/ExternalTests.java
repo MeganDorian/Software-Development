@@ -4,7 +4,7 @@ import org.itmo.commands.external.External;
 import org.itmo.exceptions.ExternalException;
 import org.itmo.utils.CommandInfo;
 import org.itmo.utils.CommandResultSaver;
-import org.itmo.utils.FileUtils;
+import org.itmo.utils.FileUtilsForTest;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -34,7 +34,7 @@ public class ExternalTests {
         }
         external.execute();
         CommandResultSaver.saveCommandResult();
-        String actual = FileUtils.loadFullContent(CommandResultSaver.getResult().toFile());
+        String actual = FileUtilsForTest.loadFullContent(CommandResultSaver.getResult().toFile());
         assertEquals(System.getProperty("user.dir"), actual);
     }
     

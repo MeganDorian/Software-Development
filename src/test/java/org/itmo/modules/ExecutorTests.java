@@ -2,7 +2,7 @@ package org.itmo.modules;
 
 import org.itmo.utils.CommandInfo;
 import org.itmo.utils.CommandResultSaver;
-import org.itmo.utils.FileUtils;
+import org.itmo.utils.FileUtilsForTest;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -22,7 +22,7 @@ public class ExecutorTests {
     @MethodSource("forRunAllCommandsTest")
     public void runAllCommandsTest(List<CommandInfo> allCommands, String expected) {
         executor.run(allCommands);
-        String actual = FileUtils.loadFullContent(CommandResultSaver.getResult().toFile());
+        String actual = FileUtilsForTest.loadFullContent(CommandResultSaver.getResult().toFile());
         assertEquals(expected, actual);
     }
     

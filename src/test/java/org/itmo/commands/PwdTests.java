@@ -3,7 +3,7 @@ package org.itmo.commands;
 import org.itmo.commands.pwd.Pwd;
 import org.itmo.utils.CommandInfo;
 import org.itmo.utils.CommandResultSaver;
-import org.itmo.utils.FileUtils;
+import org.itmo.utils.FileUtilsForTest;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -27,7 +27,7 @@ public class PwdTests {
         Pwd pwd = new Pwd(info);
         assertDoesNotThrow(pwd::execute);
         CommandResultSaver.saveCommandResult();
-        String actual = FileUtils.loadFullContent(CommandResultSaver.getResult().toFile())
+        String actual = FileUtilsForTest.loadFullContent(CommandResultSaver.getResult().toFile())
                 .replaceAll("\r", "").replaceAll("\n", "");
         assertEquals(expected, actual);
     }

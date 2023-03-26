@@ -67,12 +67,29 @@ public class Cat implements Command {
         }
     }
     
+    /**
+     * Write to the common output stream
+     *
+     * @param l          string to write to stream
+     * @param lineNumber number of line append if the flag is presented
+     *
+     * @return number of line
+     *
+     * @throws IOException if unable to write to the common output stream
+     */
     private int writeToOutput(String l, int lineNumber) throws IOException {
         String line = appendNumberOfLines(lineNumber) + l + appendDollarSymbol() + "\n";
         CommandResultSaver.writeToOutput(line, APPEND_TO_OUTPUT);
         return lineNumber + 1;
     }
     
+    /**
+     * In cycle reads content from each file from the list of files and writes their content to the
+     * output stream with dollar symbol or line number if needed
+     *
+     * @throws CatFileNotFoundException if can't find file from the list
+     * @throws IOException              if unable to write to the common output stream
+     */
     private void readContentFromFiles() throws CatFileNotFoundException, IOException {
         int lineNumber = 1;
         for (String fileName : files) {
@@ -85,6 +102,17 @@ public class Cat implements Command {
         }
     }
     
+    /**
+     * Reads from input stream a line and writes it to the output stream with dollar symbol or line
+     * number if needed
+     *
+     * @param stream     input stream to read from
+     * @param lineNumber number of line append if the flag is presented
+     *
+     * @return number of line
+     *
+     * @throws IOException if unable to write to the common output stream
+     */
     private int readFromInputStream(InputStream stream, int lineNumber) throws IOException {
         try (BufferedReader reader = getReader(stream)) {
             while (reader.ready()) {
@@ -95,10 +123,22 @@ public class Cat implements Command {
         return lineNumber;
     }
     
+    /**
+     * If flag -n is presented appends tabs and line number. Otherwise, return empty string
+     *
+     * @param lineNumber line number to append to the result if needed
+     *
+     * @return string with appended or not line number
+     */
     private String appendNumberOfLines(Integer lineNumber) {
         return numberOfLine ? "\t" + lineNumber + "\t\t" : "";
     }
     
+    /**
+     * If flag -e is presented return dollar symbol. Otherwise, return empty string
+     *
+     * @return dollar symbol or empty string
+     */
     private String appendDollarSymbol() {
         return displayDollar ? "$" : "";
     }

@@ -60,6 +60,13 @@ public class Wc implements Command {
      */
     private final Pair<Long> byteCount = new Pair<>(0L, 0L);
     
+    /**
+     * Counts lines, words, bytes count from the list of params. If no params, then reads from input
+     * stream
+     *
+     * @throws WcFileNotFoundException if no file with passed name found
+     * @throws IOException             if unable to write to the common output stream
+     */
     @Override
     public void execute() throws WcFileNotFoundException, IOException {
         if (printHelp()) {
@@ -83,6 +90,16 @@ public class Wc implements Command {
         }
     }
     
+    /**
+     * Reads from passed input stream content, counts requested information (line count, word count,
+     * byte count) and writes to the common output stream
+     *
+     * @param stream   input stream to read from
+     * @param fileName name of file to write to the result. Empty string if reading from the common
+     *                 input stream
+     *
+     * @throws IOException if unable to write to the common output stream
+     */
     private void readFromInputStream(InputStream stream, String fileName) throws IOException {
         try (BufferedReader reader = getReader(stream)) {
             while (reader.ready()) {
@@ -100,6 +117,12 @@ public class Wc implements Command {
         }
     }
     
+    /**
+     * In cycle counts information from the files
+     *
+     * @throws WcFileNotFoundException if no file with passed name found
+     * @throws IOException             if unable to write to the common output stream
+     */
     private void countFromFiles() throws WcFileNotFoundException, IOException {
         for (String fileName : params) {
             File file = new File(fileName);
@@ -111,6 +134,18 @@ public class Wc implements Command {
         }
     }
     
+    /**
+     * Write to the common output stream. According to the presented flags constructs result
+     * string.
+     *
+     * @param lineCount  current lines count
+     * @param wordsCount current words count
+     * @param byteCount  current bytes count
+     * @param filename   name of file with presented content. Empty if content was from input
+     *                   stream
+     *
+     * @throws IOException if unable to write to the common output stream
+     */
     private void write(long lineCount, long wordsCount, long byteCount, String filename)
         throws IOException {
         StringBuilder result = new StringBuilder();

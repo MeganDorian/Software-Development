@@ -18,8 +18,23 @@ public interface Command {
      */
     void execute() throws Exception;
     
+    /**
+     * If flag -h or --help passed to the command, prints help
+     *
+     * @return true if the help was printed
+     *
+     * @throws IOException if unable to write to the common output stream
+     */
     boolean printHelp() throws IOException;
     
+    /**
+     * Opens file with help info about the command and writes it content to the common output
+     * stream
+     *
+     * @param command command name
+     *
+     * @throws IOException if unable to write to the common output stream
+     */
     default void print(Commands command) throws IOException {
         String helpFileName = ResourcesLoader.getProperty(command + ".help");
         try (BufferedReader reader = getReader(FileUtils.getFileFromResource(helpFileName))) {
@@ -29,9 +44,19 @@ public interface Command {
         }
     }
     
+    /**
+     * Opens buffered reader from the passed input stream with the standard encoding UTF-8
+     *
+     * @param inputStream stream to read
+     *
+     * @return opened buffered reader
+     */
     default BufferedReader getReader(InputStream inputStream) {
         return new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8));
     }
     
+    /**
+     * @return name of the command
+     */
     Commands getCommandName();
 }

@@ -17,7 +17,6 @@ import org.itmo.utils.command.CommandResultSaver;
 /**
  * ECHO command to print in the console
  */
-
 @Parameters(commandDescription = "ECHO command to print in the console")
 @AllArgsConstructor
 @NoArgsConstructor

@@ -25,6 +25,18 @@ public class CommandParser {
     private List<String> parsedCommands;
     private LocalStorage localStorage;
     
+    /**
+     * Initialises JCommander object which can parse the passed command. For internal commands uses
+     * addCommand() method, cause no need of the command name.
+     * <p>
+     * For the external commands uses addObject() method as for external command execution needs its
+     * name
+     *
+     * @param commandName name of command
+     * @param command     command object to parser mapping
+     *
+     * @return parser
+     */
     private JCommander initCommander(String commandName, Command command) {
         JCommander jc;
         if (isInternal(commandName)) {
@@ -38,6 +50,13 @@ public class CommandParser {
     }
     
     
+    /**
+     * Tries to match variable from the passed string and save it to the local storage
+     *
+     * @param parsedCommand string to parse
+     *
+     * @return true if variable was found in the string and saved to the local storage
+     */
     private boolean matchVariable(String parsedCommand) {
         Matcher matcherVariableAddition = variableAddition.matcher(parsedCommand);
         if (!matcherVariableAddition.find()) {
@@ -79,6 +98,11 @@ public class CommandParser {
         }
     }
     
+    /**
+     * @param commandName string representation of command name
+     *
+     * @return enum representation of command
+     */
     private Commands getCommandName(String commandName) {
         if (!isInternal(commandName)) {
             return Commands.external;

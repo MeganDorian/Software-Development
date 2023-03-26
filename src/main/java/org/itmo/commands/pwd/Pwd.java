@@ -26,6 +26,10 @@ public class Pwd implements Command {
     @Getter
     private static String currentDirectory = System.getProperty("user.dir");
     
+    /**
+     * Executes pwd command
+     * @throws IOException if unable to write to the common output stream
+     */
     @Override
     public void execute() throws IOException {
         if (printHelp()) {

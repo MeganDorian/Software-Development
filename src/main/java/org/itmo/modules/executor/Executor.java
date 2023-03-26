@@ -63,6 +63,16 @@ public class Executor {
         }
     }
     
+    /**
+     * In cycle start each command from the list. If there was exit command, then cli need to stop
+     * working
+     *
+     * @param allCommands list of commands
+     *
+     * @return CONTINUE flag if no exit command was presented in list of commands
+     * <p>
+     * EXIT otherwise
+     */
     public ExecutorFlags run(List<Command> allCommands) {
         try {
             CommandResultSaver.clearOutput();

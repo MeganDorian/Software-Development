@@ -16,7 +16,9 @@ import org.itmo.exceptions.ExternalException;
 import org.itmo.utils.FileUtils;
 import org.itmo.utils.command.CommandResultSaver;
 
-
+/**
+ * EXTERNAL command
+ */
 @Parameters(commandDescription = "any external command")
 @AllArgsConstructor
 public class External implements Command {
@@ -31,35 +33,74 @@ public class External implements Command {
         isWindows = System.getProperty("os.name").toLowerCase().startsWith("windows");
     }
     
-    
-    private void executeProcess(Process process) throws IOException, ExternalException {
+    /**
+     * Retrieves output content from the process, print it to the system out and to the common
+     * output stream
+     *
+     * @param process started process which executes external command
+     * @param reader  connected to the output stream of the process reader
+     *
+     * @throws InterruptedException if process interrupted while waiting
+     * @throws IOException          if unable to write to the common output stream
+     */
+    private void retrieveContentFromProcess(Process process, BufferedReader reader)
+        throws InterruptedException, IOException {
         String line;
-        try (BufferedReader readerError = getReader(process.getErrorStream());
-             BufferedReader readerToPrintImmediately = getReader(FileUtils.getFileAsStream(
-                 CommandResultSaver.getExternalResult().toAbsolutePath().toString()))) {
-            
-            do {
-                process.waitFor(10, TimeUnit.NANOSECONDS);
-                while ((line = readerToPrintImmediately.readLine()) != null) {
-                    System.out.println(line);
-                    CommandResultSaver.writeToOutput(line, APPEND_TO_OUTPUT);
-                }
-            } while (process.isAlive());
-            
-            if (process.exitValue() != 0) {
-                StringBuilder error = new StringBuilder();
-                while ((line = readerError.readLine()) != null) {
-                    error.append(line).append("\n");
-                }
-                throw new ExternalException(error.toString());
+        do {
+            process.waitFor(10, TimeUnit.NANOSECONDS);
+            while ((line = reader.readLine()) != null) {
+                System.out.println(line);
+                CommandResultSaver.writeToOutput(line, APPEND_TO_OUTPUT);
             }
+        } while (process.isAlive());
+    }
+    
+    /**
+     * Handles if during the process execution any error was written to the error stream
+     *
+     * @param process     with started external command
+     * @param readerError reader connected to the error stream of the process
+     *
+     * @throws ExternalException if during the process any exception was thrown
+     * @throws IOException       If an I/O error occurs
+     */
+    private void handleError(Process process, BufferedReader readerError)
+        throws ExternalException, IOException {
+        String line;
+        if (process.exitValue() != 0) {
+            StringBuilder error = new StringBuilder();
+            while ((line = readerError.readLine()) != null) {
+                error.append(line).append("\n");
+            }
+            throw new ExternalException(error.toString());
+        }
+    }
+    
+    /**
+     * Handles the process work
+     *
+     * @param process with started external command
+     *
+     * @throws IOException       if unable to write to the common output stream
+     * @throws ExternalException if during the process any exception was thrown
+     */
+    private void executeProcess(Process process) throws IOException, ExternalException {
+        try (BufferedReader readerError = getReader(process.getErrorStream());
+             BufferedReader reader = getReader(FileUtils.getFileAsStream(
+                 CommandResultSaver.getExternalResult().toAbsolutePath().toString()))) {
+            retrieveContentFromProcess(process, reader);
+            handleError(process, readerError);
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
         }
     }
     
     /**
-     * Run users command
+     * Runs users command. Creates temporary file to write the result of the command. Deletes it
+     * after the execution
+     *
+     * @throws ExternalException if during the command execution thread threw IOException
+     * @throws IOException       if during the creation of temporary file threw IOException
      */
     @Override
     public void execute() throws ExternalException, IOException {
@@ -68,9 +109,8 @@ public class External implements Command {
         builder.command(isWindows ? "cmd.exe" : "sh", isWindows ? "/c" : "-c",
                         String.join(" ", params)).redirectInput(ProcessBuilder.Redirect.INHERIT)
                .redirectOutput(CommandResultSaver.getExternalResult().toFile());
-        Process process = null;
         try {
-            process = builder.start();
+            Process process = builder.start();
             executeProcess(process);
         } catch (IOException e) {
             throw new ExternalException(params.get(0) + " command not found");

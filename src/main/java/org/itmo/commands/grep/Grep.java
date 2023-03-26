@@ -42,6 +42,12 @@ public class Grep implements Command {
     @Parameter(description = "The list of files to search in")
     private List<String> patternAndFiles;
     
+    /**
+     * Executes grep command
+     *
+     * @throws GrepException if no pattern passed to the command or file to search not found
+     * @throws IOException   if unable to write to the common output stream
+     */
     @Override
     public void execute() throws GrepException, IOException {
         if (patternAndFiles.isEmpty()) {
@@ -77,10 +83,25 @@ public class Grep implements Command {
         }
     }
     
+    /**
+     * Write to the common output stream
+     *
+     * @param line string to write to stream
+     *
+     * @throws IOException if unable to write to the common output stream
+     */
     private void writeToOutput(String line) throws IOException {
         CommandResultSaver.writeToOutput(line + "\n", APPEND_TO_OUTPUT);
     }
     
+    /**
+     * In cycle reads content from each file from the list of files and searches in their content
+     * pattern. Found result writes to the output stream
+     *
+     * @param pattern to search
+     *
+     * @throws GrepException if file to search not found
+     */
     private void searchInFiles(Pattern pattern) throws GrepException {
         for (String fileName : patternAndFiles) {
             File file = new File(fileName);
@@ -91,12 +112,30 @@ public class Grep implements Command {
         }
     }
     
+    /**
+     * Check id the line matches pattern
+     *
+     * @param pattern to search
+     * @param line    to match
+     *
+     * @return true if found pattern in the line.
+     * <p>
+     * false otherwise
+     */
     private boolean checkPattern(Pattern pattern, String line) {
         line = isCaseInsensitive() ? line.toLowerCase(Locale.ROOT) : line;
         Matcher matcher = pattern.matcher(line);
         return matcher.find();
     }
     
+    /**
+     * Opens the input stream (file or system input or common input stream) and reads content from
+     * it. Then searches for pattern and writes to the common output stream found lines. If pattern
+     * found and lineCountToPrint not equal to zero, writes next line to the common output stream
+     *
+     * @param inputStream stream to read from
+     * @param pattern     to search
+     */
     private void readFromInputStream(InputStream inputStream, Pattern pattern) {
         int lineCount = getLineCountToPrint();
         boolean found = false;

@@ -395,7 +395,14 @@ public class Parser {
         return parsedCommand;
     }
     
-    
+    /**
+     * Get the list of commands and constructs the list of Command object with mapped flags,
+     * parameters etc.
+     *
+     * @param parsedCommands list if parsed commands
+     *
+     * @return list of mapped Commands
+     */
     public List<Command> commandParser(List<String> parsedCommands) {
         return new CommandParser(parsedCommands, localStorage).commandParser();
     }
